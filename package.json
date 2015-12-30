@@ -4,6 +4,9 @@
   "description": "A helpful bot for interacting with Beeminder",
   "main": "index.js",
   "dependencies": {
+    "body-parser": "^1.14.2",
+    "express": "^4.13.3",
+    "request": "^2.67.0",
     "slack": "^5.2.0"
   },
   "devDependencies": {},
