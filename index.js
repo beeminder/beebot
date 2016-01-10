@@ -12,7 +12,7 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());
-app.use(bodyParser.urlEncoded());
+app.use(bodyParser.urlencoded());
 var url = require('url');
 var request = require('request');
 var slackClient = require('slack-client');
