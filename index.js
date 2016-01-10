@@ -95,8 +95,6 @@ app.get('/debugger', function(req, res) {
 
 app.post('/roll', function(req, res) {
   var text = req.body.text;
-  res.send(req.body);
-  return;
   if (text.match(/^[0-9]+$/) == null) {
     res.send("Not an integer! Try again...")
   } else {
