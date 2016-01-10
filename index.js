@@ -95,13 +95,13 @@ app.get('/debugger', function(req, res) {
 
 app.post('/roll', function(req, res) {
   var text = req.body.text;
-  console.log(text);
   if (text.match(/^[0-9]+$/) == null) {
-    console.log("no match");
     res.send("Not an integer! Try again...");
   } else {
-    console.log("match");
-    res.send("Rolling a " + text + "-sided die... it came up " + Math.floor(Math.random() * (text - 0)) + 1);
+    res.send({
+      "response_type": "in_channel",
+      "text": "Rolling a " + text + "-sided die... it came up " + (Math.floor(Math.random() * (text - 0)) + 1)
+    });
   }
 });
 
