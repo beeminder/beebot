@@ -99,7 +99,7 @@ app.post('/roll', function(req, res) {
   } else {
     res.send("Rolling a " + text + "-sided die... it came up " + Math.floor(Math.random() * (text - 0)) + 1);
   }
-}
+});
 
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
