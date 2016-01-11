@@ -52,7 +52,7 @@ var handleMessage = function(rtm, message) {
 };
 
 var startBot = function(teamId) {
-  var credentials = redis.hgetall("beebot.teamid." + teamId, function(err, obj) {
+  redis.hgetall("beebot.teamid." + teamId, function(err, obj) {
     var WebClient = slackClient.WebClient;
     var RtmClient = slackClient.RtmClient;
     var webClient = new WebClient(obj.bot_access_token);
@@ -65,6 +65,7 @@ var startBot = function(teamId) {
     });
 
     rtm.start();
+    rtm.teamId = teamId;
     bots.push(rtm);
   })
 };
@@ -87,6 +88,20 @@ app.post('/zeno', function(req, res) {
   // expects team+user ID, goal ID, deadline, bare min.
 
   // should look up the rtm bot that has the user on its team and post a DM.
+  var rtm = bots.filter(function(b) { return b.teamId == req.body.team_id; })[0];
+  if (rtm == null) { res.send("500"); }
+  var WebClient = slackClient.WebClient;
+  var webClient = new WebClient(rtm._webClient._token); // not sure if this is the right way to do that...
+  webClient.dm.open(req.body.user_id, function(error, response) {
+    if (!response.ok) { res.send("error!"); return; } //TODO: alert
+    rtm.send({
+      id: 1,
+      type: "message",
+      channel: response.channel.id,
+      text: req.body.message
+    });
+    res.send("ok");
+  });
 });
 
 app.get('/debugger', function(req, res) {
