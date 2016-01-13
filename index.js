@@ -104,6 +104,7 @@ app.post('/zeno', function(req, res) {
           text: req.body.message
         });
         res.send("ok");
+        return;
       }
       res.send("could not find a channel with the name " + req.body.channel);
     });
