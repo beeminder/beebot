@@ -88,20 +88,29 @@ app.post('/zeno', function(req, res) {
   var rtm = bots.filter(function(b) { return b.teamId == req.body.team_id; })[0];
   if (rtm == null) { res.send("500"); }
 
+  var WebClient = slackClient.WebClient;
+  var webClient = new WebClient(rtm._webClient._token);
+
   if (req.body.channel) {
-    rtm.send({
-      id: 1,
-      type: "message",
-      channel: req.body.channel,
-      text: req.body.message
+    webClient.channels.list({}, function(error, response) {
+      if (!response.ok) { res.send("error!"); return; } //TODO: alert
+      for (var i = 0; i < response.channels.length; i++) {
+        var channel = channels[i];
+        if (channel.name != req.body.channel.replace('#', '')) { next; }
+        rtm.send({
+          id: 1,
+          type: "message",
+          channel: req.body.channel,
+          text: req.body.message
+        });
+        res.send("ok");
+      }
+      res.send("could not find a channel with the name " + req.body.channel);
     });
-    res.send("ok");
     return;
   }
 
   // else default to a DM
-  var WebClient = slackClient.WebClient;
-  var webClient = new WebClient(rtm._webClient._token); // not sure if this is the right way to do that...
   webClient.dm.open(req.body.user_id, function(error, response) {
     if (!response.ok) { res.send("error!"); return; } //TODO: alert
     rtm.send({
