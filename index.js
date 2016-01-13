@@ -95,7 +95,7 @@ app.post('/zeno', function(req, res) {
     webClient.channels.list({}, function(error, response) {
       if (!response.ok) { res.send("error!"); return; } //TODO: alert
       for (var i = 0; i < response.channels.length; i++) {
-        var channel = channels[i];
+        var channel = response.channels[i];
         if (channel.name != req.body.channel.replace('#', '')) { next; }
         rtm.send({
           id: 1,
