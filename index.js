@@ -86,7 +86,7 @@ app.delete('/bot', function(req, res) {
 
 app.post('/zeno', function(req, res) {
   var rtm = bots.filter(function(b) { return b.teamId == req.body.team_id; })[0];
-  if (rtm == null) { res.send("500"); }
+  if (rtm == null) { res.send("500"); return; }
 
   var WebClient = slackClient.WebClient;
   var webClient = new WebClient(rtm._webClient._token);
@@ -100,7 +100,7 @@ app.post('/zeno', function(req, res) {
         rtm.send({
           id: 1,
           type: "message",
-          channel: req.body.channel,
+          channel: channel.id,
           text: req.body.message
         });
         res.send("ok");
