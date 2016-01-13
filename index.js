@@ -85,11 +85,21 @@ app.delete('/bot', function(req, res) {
 });
 
 app.post('/zeno', function(req, res) {
-  // expects team+user ID, goal ID, deadline, bare min.
-
-  // should look up the rtm bot that has the user on its team and post a DM.
   var rtm = bots.filter(function(b) { return b.teamId == req.body.team_id; })[0];
   if (rtm == null) { res.send("500"); }
+
+  if (req.body.channel) {
+    rtm.send({
+      id: 1,
+      type: "message",
+      channel: req.body.channel,
+      text: req.body.message
+    });
+    res.send("ok");
+    return;
+  }
+
+  // else default to a DM
   var WebClient = slackClient.WebClient;
   var webClient = new WebClient(rtm._webClient._token); // not sure if this is the right way to do that...
   webClient.dm.open(req.body.user_id, function(error, response) {
