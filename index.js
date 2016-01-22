@@ -64,6 +64,10 @@ var startBot = function(teamId) {
         }
     });
 
+    rtm.on('error', function(bot) {
+      bot.disconnect();
+    });
+
     rtm.start();
     rtm.teamId = teamId;
     bots.push(rtm);
