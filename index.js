@@ -58,11 +58,11 @@ var startBot = function(teamId) {
     var webClient = new WebClient(obj.bot_access_token);
     var rtm = new RtmClient(webClient, {logLevel: 'debug'});
 
-    rtm.on('message', function(message) {
-        if (message.channel.match(/^D/)) {
-          handleMessage(rtm, message);
-        }
-    });
+    // rtm.on('message', function(message) {
+    //     if (message.channel.match(/^D/)) {
+    //       handleMessage(rtm, message);
+    //     }
+    // });
 
     rtm.on('error', function(bot) {
       bot.disconnect();
