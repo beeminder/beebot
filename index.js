@@ -1,4 +1,3 @@
-// https://slack.com/oauth/authorize?scope=identify,incoming-webhook,commands,bot&client_id=14536485331.17569015415
 require('dotenv').load();
 if (process.env.REDISTOGO_URL) {
   var rtg   = require("url").parse(process.env.REDISTOGO_URL);
@@ -56,7 +55,7 @@ var startBot = function(teamId) {
     var WebClient = slackClient.WebClient;
     var RtmClient = slackClient.RtmClient;
     var webClient = new WebClient(obj.bot_access_token);
-    var rtm = new RtmClient(webClient, {logLevel: 'debug'});
+    var rtm = new RtmClient(webClient);
 
     // rtm.on('message', function(message) {
     //     if (message.channel.match(/^D/)) {
