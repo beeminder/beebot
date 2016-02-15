@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "body-parser": "^1.14.2",
-    "slack-client": "^2.0.1",
+    "slack-client": "l12s/node-slack-client",
     "dotenv": "^1.2.0",
     "express": "^4.13.3",
     "redis": "^2.4.2",
