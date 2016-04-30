@@ -14,7 +14,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 var url = require('url');
 var request = require('request');
-var slackClient = require('slack-client');
 var https = require('https');
 var http = require('http');
 
@@ -78,10 +77,8 @@ app.delete('/bot', function(req, res) {
 app.post('/zeno', function(req, res) {
   var rtm = bots.filter(function(b) { return b.teamId == req.body.team_id; })[0];
   if (rtm == null) { res.send("500"); return; }
-
-  var WebClient = slackClient.WebClient;
-  var webClient = new WebClient(rtm._webClient._token);
-
+  var WebClient = require('@slack/client').WebClient;
+  var webClient = new WebClient(rtm._token);
   if (req.body.channel) {
     webClient.channels.list({}, function(error, response) {
       if (!response.ok) { res.send("error!"); return; } //TODO: alert
