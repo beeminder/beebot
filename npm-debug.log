@@ -7,7 +7,7 @@
 6 silly lifecycle beebot@1.0.0~prestart: no script for prestart, continuing
 7 info lifecycle beebot@1.0.0~start: beebot@1.0.0
 8 verbose lifecycle beebot@1.0.0~start: unsafe-perm in lifecycle true
-9 verbose lifecycle beebot@1.0.0~start: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/Users/andy/code/beebot/node_modules/.bin:/Users/andy/.rvm/gems/ruby-2.0.0-p247/bin:/Users/andy/.rvm/gems/ruby-2.0.0-p247@global/bin:/Users/andy/.rvm/rubies/ruby-2.0.0-p247/bin:/Users/andy/.rvm/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/Users/andy/.rvm/bin
+9 verbose lifecycle beebot@1.0.0~start: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/Users/andy/code/beebot/node_modules/.bin:/Users/andy/.rvm/gems/ruby-2.2.4/bin:/Users/andy/.rvm/gems/ruby-2.2.4@global/bin:/Users/andy/.rvm/rubies/ruby-2.2.4/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/Users/andy/.rvm/bin
 10 verbose lifecycle beebot@1.0.0~start: CWD: /Users/andy/code/beebot
 11 silly lifecycle beebot@1.0.0~start: Args: [ '-c', 'node index.js' ]
 12 silly lifecycle beebot@1.0.0~start: Returned: code: 1  signal: null

@@ -15,53 +15,41 @@ app.use(bodyParser.urlencoded({ extended: true }));
 var url = require('url');
 var request = require('request');
 var slackClient = require('slack-client');
+var https = require('https');
+var http = require('http');
 
 var bots = []; // yikes
 
 var handleMessage = function(rtm, message) {
-  redis.keys("beebot.userid." + message.user, function(err, obj) {
-    if (obj) {
-      if (obj.account_reply) {
+  http.get("http://localhost:3000/slackbot?command=" + message.text + "&team_id=" + message.team + "&user_id=" + message.user, function(res) {
+    var text = '';
+    res.on("data", function(chunk) {
+      text += chunk;
+    });
 
-      }
-      else {
-        redis.hmset("beebot.userid." + message.user, { account_reply: true });
-        var replyText = "Okay - you can sign up for one here: https://www.beeminder.com";
-        if (message.text.match(/y/)) {
-          replyText = "Great. Log in to Beeminder (if you're not already), and then link your Beeminder account to Slack here: https://www.beeminder.com/slack_auth";
-        }
-        rtm.send({
-          id: 1,
-          type: "message",
-          channel: message.channel,
-          text: replyText
-        });
-      }
-    }
-    else {
-      redis.hmset("beebot.userid." + message.user, {});
+    res.on("end", function() {
       rtm.send({
         id: 1,
         type: "message",
         channel: message.channel,
-        text: "Hey, nice to meet you. Do you already have a Beeminder account?"
+        text: text
       });
-    }
+    });
+  }).on('error', (e) => {
+    console.error(e);
   });
 };
 
 var startBot = function(teamId) {
   redis.hgetall("beebot.teamid." + teamId, function(err, obj) {
-    var WebClient = slackClient.WebClient;
-    var RtmClient = slackClient.RtmClient;
-    var webClient = new WebClient(obj.bot_access_token);
-    var rtm = new RtmClient(webClient);
+    var RtmClient = require('@slack/client').RtmClient;
+    var rtm = new RtmClient(obj.bot_access_token, {logLevel: 'debug'});
 
-    // rtm.on('message', function(message) {
-    //     if (message.channel.match(/^D/)) {
-    //       handleMessage(rtm, message);
-    //     }
-    // });
+    rtm.on('message', function(message) {
+        if (message.channel.match(/^D/)) {
+          handleMessage(rtm, message);
+        }
+    });
 
     rtm.on('error', function(bot) {
       bot.disconnect();
