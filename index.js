@@ -21,7 +21,7 @@ var http = require('http');
 var bots = []; // yikes
 
 var handleMessage = function(rtm, message) {
-  http.get("http://localhost:3000/slackbot?command=" + encodeURIComponent(message.text) + "&team_id=" + message.team + "&user_id=" + message.user, function(res) {
+  https.get("https://www.beeminder.com/slackbot?command=" + encodeURIComponent(message.text) + "&team_id=" + message.team + "&user_id=" + message.user, function(res) {
     var text = '';
     res.on("data", function(chunk) {
       text += chunk;
