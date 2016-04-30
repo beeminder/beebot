@@ -42,7 +42,12 @@ var handleMessage = function(rtm, message) {
 var startBot = function(teamId) {
   redis.hgetall("beebot.teamid." + teamId, function(err, obj) {
     var RtmClient = require('@slack/client').RtmClient;
-    var rtm = new RtmClient(obj.bot_access_token, {logLevel: 'debug'});
+    var MemoryDataStore = require('@slack/client').MemoryDataStore;
+    var rtm = new RtmClient(obj.bot_access_token, {
+      logLevel: 'debug',
+      dataStore: new MemoryDataStore(),
+      autoReconnect: true,
+    });
 
     rtm.on('message', function(message) {
         if (message.channel.match(/^D/)) {
@@ -79,6 +84,7 @@ app.post('/zeno', function(req, res) {
   if (rtm == null) { res.send("500"); return; }
   var WebClient = require('@slack/client').WebClient;
   var webClient = new WebClient(rtm._token);
+
   if (req.body.channel) {
     webClient.channels.list({}, function(error, response) {
       if (!response.ok) { res.send("error!"); return; } //TODO: alert
@@ -100,16 +106,9 @@ app.post('/zeno', function(req, res) {
   }
 
   // else default to a DM
-  webClient.dm.open(req.body.user_id, function(error, response) {
-    if (!response.ok) { res.send("error!"); return; } //TODO: alert
-    rtm.send({
-      id: 1,
-      type: "message",
-      channel: response.channel.id,
-      text: req.body.message
-    });
-    res.send("ok");
-  });
+  var user = rtm.dataStore.getUserById(req.body.user_id);
+  var dm = rtm.dataStore.getDMByName(user.name);
+  rtm.sendMessage(req.body.message, dm.id);
 });
 
 app.get('/debugger', function(req, res) {
