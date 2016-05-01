@@ -22,13 +22,11 @@ var bots = []; // yikes
 var handleMessage = function(rtm, message) {
   var text = message.text;
   var regexpString = "<@" + rtm.activeUserId + ">";
-  console.log(regexpString);
   if (message.text.match(new RegExp(regexpString))) {
     // remove the @-mention of the bot from the message
     var tokenized = message.text.split(/\s/);
     tokenized = tokenized.filter(function(e) { return !e.match(new RegExp(regexpString)) });
     text = tokenized.join(" ");
-    console.log("BOOM: " + text);
   }
   https.get("https://www.beeminder.com/slackbot?command=" + encodeURIComponent(text) + "&team_id=" + message.team + "&user_id=" + message.user, function(res) {
     var resText = '';
@@ -60,6 +58,7 @@ var startBot = function(teamId) {
     });
 
     rtm.on('message', function(message) {
+      if (!message.text) { return; }
       var regexpString = "<@" + rtm.activeUserId + ">";
       if (message.text.match(new RegExp(regexpString))) {
         handleMessage(rtm, message);
