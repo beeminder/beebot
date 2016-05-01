@@ -50,7 +50,7 @@ var startBot = function(teamId) {
     });
 
     rtm.on('message', function(message) {
-        if (message.channel.match(/^D/)) {
+        if (message.channel.match(/^D/) && message.team) {
           handleMessage(rtm, message);
         }
     });
