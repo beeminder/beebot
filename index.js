@@ -109,6 +109,8 @@ app.post('/zeno', function(req, res) {
   var user = rtm.dataStore.getUserById(req.body.user_id);
   var dm = rtm.dataStore.getDMByName(user.name);
   rtm.sendMessage(req.body.message, dm.id);
+  res.send("ok");
+  return;
 });
 
 app.get('/debugger', function(req, res) {
