@@ -20,10 +20,17 @@ var http = require('http');
 var bots = []; // yikes
 
 var handleMessage = function(rtm, message) {
-  https.get("https://www.beeminder.com/slackbot?command=" + encodeURIComponent(message.text) + "&team_id=" + message.team + "&user_id=" + message.user, function(res) {
-    var text = '';
+  var text = message.text;
+  if (message.text.match(/^</)) {
+    // remove the first @-mention of the bot from the message
+    var tokenized = message.text.split(/\s/);
+    tokenized.shift();
+    text = tokenized.join(" ");
+  }
+  https.get("https://www.beeminder.com/slackbot?command=" + encodeURIComponent(text) + "&team_id=" + message.team + "&user_id=" + message.user, function(res) {
+    var resText = '';
     res.on("data", function(chunk) {
-      text += chunk;
+      resText += chunk;
     });
 
     res.on("end", function() {
@@ -31,7 +38,7 @@ var handleMessage = function(rtm, message) {
         id: 1,
         type: "message",
         channel: message.channel,
-        text: text
+        text: resText
       });
     });
   }).on('error', (e) => {
@@ -50,13 +57,23 @@ var startBot = function(teamId) {
     });
 
     rtm.on('message', function(message) {
-        if (message.channel.match(/^D/) && message.team) {
-          handleMessage(rtm, message);
-        }
+      var regexpString = "^<@" + rtm.userId + ">";
+      if (message.text.match(new RegExp(regexpString))) {
+        handleMessage(rtm, message);
+      }
+      if (message.channel.match(/^D/) && message.team) {
+        handleMessage(rtm, message);
+      }
     });
 
     rtm.on('error', function(bot) {
       bot.disconnect();
+    });
+
+    var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
+
+    rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, function (rtmStartData) {
+      rtm.userId = rtmStartData.self.id;
     });
 
     rtm.start();
