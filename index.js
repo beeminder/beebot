@@ -47,6 +47,14 @@ var handleMessage = function(rtm, message) {
   });
 };
 
+var stopBot = function(teamId) {
+  bots.forEach(function(rtm) {
+    if (rtm.teamId === teamId) {
+      rtm.disconnect();
+    }
+  });
+};
+
 var startBot = function(teamId) {
   redis.hgetall("beebot.teamid." + teamId, function(err, obj) {
     var RtmClient = require('@slack/client').RtmClient;
@@ -78,6 +86,7 @@ var startBot = function(teamId) {
       rtm.userId = rtmStartData.self.id;
     });
 
+    stopBot(teamId);
     rtm.start();
     rtm.teamId = teamId;
     bots.push(rtm);
