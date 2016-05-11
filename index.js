@@ -149,12 +149,20 @@ app.post('/roll', function(req, res) {
   var text = req.body.text;
   if (text.match(/^[0-9]+$/) == null) {
     res.send("Not an integer! Try again...");
-  } else {
+    return;
+  } 
+  var n = parseInt(text);
+  if (n <= 0) {
     res.send({
       "response_type": "in_channel",
-      "text": "Rolling a " + text + "-sided die... it came up " + (Math.floor(Math.random() * (text - 0)) + 1)
+      "text": "Rolling " + text + "-sided die... :boom: (try again with a positive number of sides?)"
     });
+    return;
   }
+  res.send({
+    "response_type": "in_channel",
+    "text": "Rolling " + text + "-sided die... it came up " + (Math.floor(Math.random()*n)+1)
+  });
 });
 
 app.listen(app.get('port'), function() {
