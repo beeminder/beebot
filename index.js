@@ -146,7 +146,7 @@ app.get('/debugger', function(req, res) { debugger; });
 app.post('/roll', function(req, res) {
   var text = req.body.text;
   if (text.match(/^[0-9]+$/) == null) {
-    res.send("Not an integer! Try again...");
+    res.send("Pssst, this is not an integer: " + text);
     return;
   } 
   var n = parseInt(text);
