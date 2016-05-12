@@ -4,7 +4,7 @@ if (process.env.REDISTOGO_URL) {
   var redis = require("redis").createClient(rtg.port, rtg.hostname);
   redis.auth(rtg.auth.split(":")[1]);
 } else {
-    var redis = require("redis").createClient();
+  var redis = require("redis").createClient();
 }
 
 var express = require('express');
@@ -25,33 +25,31 @@ var handleMessage = function(rtm, message) {
   if (message.text.match(new RegExp(regexpString))) {
     // remove the @-mention of the bot from the message
     var tokenized = message.text.split(/\s/);
-    tokenized = tokenized.filter(function(e) { return !e.match(new RegExp(regexpString)) });
+    tokenized = tokenized.filter(function(e) { 
+      return !e.match(new RegExp(regexpString)) });
     text = tokenized.join(" ");
   }
-  https.get("https://www.beeminder.com/slackbot?command=" + encodeURIComponent(text) + "&team_id=" + message.team + "&user_id=" + message.user, function(res) {
-    var resText = '';
-    res.on("data", function(chunk) {
-      resText += chunk;
-    });
+  https.get("https://www.beeminder.com/slackbot?command=" 
+    + encodeURIComponent(text) + "&team_id=" 
+    + message.team + "&user_id=" + message.user, 
+    function(res) {
+      var resText = '';
+      res.on("data", function(chunk) { resText += chunk; });
 
-    res.on("end", function() {
-      rtm.send({
-        id: 1,
-        type: "message",
-        channel: message.channel,
-        text: resText
+      res.on("end", function() {
+        rtm.send({
+          id: 1,
+          type: "message",
+          channel: message.channel,
+          text: resText
+        });
       });
-    });
-  }).on('error', (e) => {
-    console.error(e);
-  });
+    }).on('error', (e) => { console.error(e); });
 };
 
 var stopBot = function(teamId) {
   bots.forEach(function(rtm) {
-    if (rtm.teamId === teamId) {
-      rtm.disconnect();
-    }
+    if (rtm.teamId === teamId) { rtm.disconnect(); }
   });
 };
 
@@ -76,9 +74,7 @@ var startBot = function(teamId) {
       }
     });
 
-    rtm.on('error', function(bot) {
-      bot.disconnect();
-    });
+    rtm.on('error', function(bot) { bot.disconnect(); });
 
     var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
 
@@ -96,20 +92,24 @@ var startBot = function(teamId) {
 app.set('port', (process.env.PORT || 5000));
 
 app.post('/bot', function(req, res) {
-  redis.hmset("beebot.teamid." + req.body.team_id, { bot_access_token: req.body.bot_access_token }, function(err, obj) {
-    startBot(req.body.team_id);
-    res.send("OK");
-  });
+  redis.hmset("beebot.teamid." + req.body.team_id, 
+    { bot_access_token: req.body.bot_access_token }, 
+    function(err, obj) {
+      startBot(req.body.team_id);
+      res.send("OK");
+    });
 });
 
 app.delete('/bot', function(req, res) {
   // delete a bot, if a user deauths from a team.
-  // basically just need to delete the team id from redis so we don't keep trying to create it on restarts
+  // basically just need to delete the teamId from redis so we don't keep trying
+  // to create it on restarts
 });
 
 app.post('/zeno', function(req, res) {
-  var rtm = bots.filter(function(b) { return b.teamId == req.body.team_id; })[0];
-  if (rtm == null) { res.send("500"); return; }
+  var rtm = bots.filter(function(b) { 
+    return b.teamId === req.body.team_id; })[0];
+  if (rtm === null) { res.send("500"); return; }
   var WebClient = require('@slack/client').WebClient;
   var webClient = new WebClient(rtm._token);
 
@@ -118,7 +118,7 @@ app.post('/zeno', function(req, res) {
       if (!response.ok) { res.send("error!"); return; } //TODO: alert
       for (var i = 0; i < response.channels.length; i++) {
         var channel = response.channels[i];
-        if (channel.name != req.body.channel.replace('#', '')) { continue; }
+        if (channel.name !== req.body.channel.replace('#', '')) { continue; }
         rtm.send({
           id: 1,
           type: "message",
@@ -141,9 +141,7 @@ app.post('/zeno', function(req, res) {
   return;
 });
 
-app.get('/debugger', function(req, res) {
-  debugger;
-});
+app.get('/debugger', function(req, res) { debugger; });
 
 app.post('/roll', function(req, res) {
   var text = req.body.text;
@@ -155,13 +153,15 @@ app.post('/roll', function(req, res) {
   if (n <= 0) {
     res.send({
       "response_type": "in_channel",
-      "text": "Rolling " + text + "-sided die... :boom: (try again with a positive number of sides?)"
+      "text": "Rolling " + text 
+        + "-sided die... :boom: (try again with a positive number of sides?)"
     });
     return;
   }
   res.send({
     "response_type": "in_channel",
-    "text": "Rolling " + text + "-sided die... it came up " + (Math.floor(Math.random()*n)+1)
+    "text": "Rolling " + text 
+      + "-sided die... it came up " + (Math.floor(Math.random()*n)+1)
   });
 });
 
