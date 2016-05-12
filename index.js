@@ -165,6 +165,15 @@ app.post('/roll', function(req, res) {
   });
 });
 
+app.post('/bid', function(req, res) {
+  var text = req.body.text;
+  var user = req.body.user_id;
+  res.send("Bidding is only stubbed out.\n"
+    + "User: " + user + "\n"
+    + "Text: " + text
+    );
+});
+
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
   redis.keys("beebot.teamid.*", function(err, obj) {
