@@ -171,8 +171,13 @@ app.post('/bid', function(req, res) {
   res.send("Bidding is only stubbed out.\n"
     + "User: " + user + "\n"
     + "Text: " + text
-    );
+  );
 });
+
+app.post('/slashtest', function(req, res) {
+  res.send("You invoked the slashtest command. This is a whispered response.");
+});
+
 
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
