@@ -181,15 +181,13 @@ var respondWithStatusText = function(res, channelId) {
       }
     });
     if (haveAnyBids) {
-      haveBids += "}, ";
-    } else {
       haveBids = haveBids.slice(0, -2);
     }
+    haveBids += "}, ";
     if (haveAnyStragglers) {
-      needBids += "}"
-    } else {
       needBids = needBids.slice(0, -2);
     }
+    needBids += "}";
     redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
       res.send({ "text": "Now bidding for " + obj.purpose + ". " + haveBids + needBids, "response_type": "in_channel" });
     });
