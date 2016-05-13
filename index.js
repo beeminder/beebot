@@ -178,7 +178,7 @@ var respondWithStatusText = function(res, channelId) {
         needBids += bidder + ", ";
       }
     });
-    res.send(haveBids + "}, " + needBids + "}");
+    res.send({ "text": haveBids + "}, " + needBids + "}", "response_type": "in_channel" });
   });
 };
 
@@ -196,7 +196,7 @@ app.post('/bid', function(req, res) {
         var purpose = obj.purpose;
         redis.del("beebot.auctions." + req.body.channel_id, function(err, obj) {
           redis.del("beebot.auctions." + req.body.channel_id + ".bids", function(err, obj) {
-            res.send("Okay, aborted the bidding for " + purpose);
+            res.send({ "text": "Okay, aborted the bidding for " + purpose, "response_type": "in_channel" });
           });
         });
       } else if (text.match(/@/)) {
