@@ -164,6 +164,21 @@ app.post('/roll', function(req, res) {
   }
 });
 
+
+var isEmpty = function(obj) {
+  return Object.keys(obj).length === 0
+}
+
+// Returns a hash of usernames (without the @'s) who are @-mentioned in s
+var attaboy = function(s) {
+  var pattern = /\B@[a-z0-9_-]+/gi; // regex for @-mentions, HT StackOverflow
+  var users = {};
+  if (s.match(pattern)) {
+    s.match(pattern).forEach(function(u) { users[u.replace("@", "")] = ""; })
+  }
+  return users
+}
+
 var respondWithStatusText = function(res, channelId) {
   var haveBids = "Have bids from: {";
   var needBids = "awaiting bids from: {";
@@ -180,13 +195,9 @@ var respondWithStatusText = function(res, channelId) {
         haveAnyStragglers = true;
       }
     });
-    if (haveAnyBids) {
-      haveBids = haveBids.slice(0, -2);
-    }
+    if (haveAnyBids)       { haveBids = haveBids.slice(0, -2); }
     haveBids += "}, ";
-    if (haveAnyStragglers) {
-      needBids = needBids.slice(0, -2);
-    }
+    if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
     redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
       shout(res, "Now bidding for " + obj.purpose + ". " + haveBids + needBids);
@@ -196,7 +207,7 @@ var respondWithStatusText = function(res, channelId) {
 
 var endAuction = function(channelId) {
   redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
-    var purpose = obj.purpose;
+    //var purpose = obj.purpose;  // this was vestigial and can be deleted, yes?
     redis.del("beebot.auctions." + channelId, function(err, obj) {
       redis.del("beebot.auctions." + channelId + ".bids", function(err, obj) {
         // nothing
@@ -210,6 +221,7 @@ app.post('/bid', function(req, res) {
     res.send("This request didn't come from Slack!");
   }
   var text = req.body.text;
+  var bids = attaboy(text);
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
     if (obj) {
       // there is an active auction in this channel
@@ -219,9 +231,9 @@ app.post('/bid', function(req, res) {
       } else if (text.match(/abort/i)) {
         endAuction(req.body.channel_id);
         shout(res, "Okay, aborted the bidding for " + purpose);
-      } else if (text.match(/@/)) {
+      } else if (!isEmpty(bids)) {
         res.send("You can't submit a bid with an @-mention. " 
-          + "There is currently an active auction for " + obj.purpose + ". "
+          //+ "There is currently an active auction for " + purpose + ". "
           + "Do `/bid abort` to end current auction or `/bid` to check status.")
       } else {
         redis.hset("beebot.auctions." + req.body.channel_id + ".bids", 
@@ -238,7 +250,7 @@ app.post('/bid', function(req, res) {
               }
             });
             if (missingBid) {
-              res.send("Got your bid!");
+              res.send("Got your bid!"); // TODO: or "updated your bid"
             } else {
               endAuction(req.body.channel_id);
               bidSummary += "\nBernoulli(0.1) says " 
@@ -255,14 +267,14 @@ app.post('/bid', function(req, res) {
       if (text === "") {
         res.send("No current auction! @-mention people to start one.");
       } else if (text.match(/abort/i)) {
-        res.send("No current auction!");
-      } else if (text.match(pattern)) {
-        var bids = {};
-        text.match(pattern).forEach(function(bidder) {
-          text = text.replace(bidder, "");
-          var strippedBidder = bidder.replace("@", "");
-          bids[strippedBidder] = "";
-        });
+        res.send("No current auction!"); // spec says shout this? shrug
+      } else if (!isEmpty(bids)) {
+        //var bids = {};                                   //SCHDEL
+        //text.match(pattern).forEach(function(bidder) {
+        //  text = text.replace(bidder, "");
+        //  var strippedBidder = bidder.replace("@", "");
+        //  bids[strippedBidder] = "";
+        //});
         bids[req.body.user_name] = "";
 
         redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", bids, 
@@ -271,7 +283,7 @@ app.post('/bid', function(req, res) {
           });
 
         var auction = {};
-        auction.purpose = text.trim();
+        auction.purpose = text.trim(); // includes the @-mentions now
         redis.hmset("beebot.auctions." + req.body.channel_id, auction, 
           function(err, obj) {
             respondWithStatusText(res, req.body.channel_id);
