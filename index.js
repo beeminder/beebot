@@ -234,10 +234,10 @@ app.post('/bid', function(req, res) {
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
     if (obj) { //-------------------------------- active auction in this channel
       if (text === "") {
-        bidStatus(res, req.body.channel_id);
+        bidStatus(res, req.body.channel_id)
       } else if (text.match(/help/i)) {
         shout(res, "Currently active auction:\n" + "TODO" + "\n" + bidHelp)
-      } else if (text.match(/abort/i))Commands are /bid help (duh), /bid  {
+      } else if (text.match(/abort/i)) {
         bidEnd(req.body.channel_id);
         // TODO: repeat the list of who's bid, then say "aborted."
         shout(res, "Aborted.");
