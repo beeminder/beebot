@@ -165,10 +165,8 @@ app.post('/roll', function(req, res) {
   }
 });
 
-
-var isEmpty = function(obj) {
-  return Object.keys(obj).length === 0
-}
+// StackOverflow says this is how you check if a hash is empty in ES5
+var isEmpty = function(obj) { return Object.keys(obj).length === 0 }
 
 // Returns a hash of usernames (without the @'s) who are @-mentioned in s
 var attabid = function(s) {
@@ -180,13 +178,13 @@ var attabid = function(s) {
   return users
 }
 
-// Want to refactor this so it just returns the string with the auction 
-// status and then the main logic decides when to shout it.
-var bidStatus = function(res, channelId) {
+// Returns string like "Got bids from {...}, waiting on {...}"
+var bidStatus = function(chan) {
+  var status = "";
   var haveBids = "Got bids from {";
   var needBids = "waiting on {";
 
-  redis.hgetall("beebot.auctions." + channelId + ".bids", function(err, obj) {
+  redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
     var haveAnyBids = false;
     var haveAnyStragglers = false;
     Object.keys(obj).forEach(function(bidder) {
@@ -202,53 +200,50 @@ var bidStatus = function(res, channelId) {
     haveBids += "}, ";
     if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
-    // does the following need to be wrapped in hgetall? seems like no
-    //redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
-    shout(res, haveBids + needBids);
-    //});   // but if bidStatus wanted to include urtext we'd need this wrapper?
+    status = haveBids + needBids;
   });
-};
+  return status
+}
 
-var bidEnd = function(channelId) {
-  redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
-    redis.del("beebot.auctions." + channelId, function(err, obj) {
-      redis.del("beebot.auctions." + channelId + ".bids", function(err, obj) {
-        // nothing
-      });
-    });
-  });
+// Deletes all the bids
+var bidEnd = function(chan) {
+  redis.hgetall("beebot.auctions." + chan, function(err, obj) {
+    redis.del("beebot.auctions." + chan, function(err, obj) {
+      redis.del("beebot.auctions." + chan + ".bids", 
+                function(err, obj) { /* nothing */ })
+    })
+  })
 }
 
 var bidHelp = "*Usage for the /bid command:*\n"
-  + "/bid help -- duh, that's why you're seeing this\n"
-  + "/bid -- with no args, checks on the status of the current auction\n"
-  + "/bid stuff -- submits your bid (can repeat it till last person bids\n"
-  + "/bid stuff with @-mentions -- starts a new auction with the some people";
++ "/bid help \t\t show this (and/or see the urtext for current auction)\n"
++ "/bid \t\t with no args, check status of current auction (ie, who's bid)\n"
++ "/bid stuff \t\t submit your bid (can resubmit till last person bids)\n"
++ "/bid stuff with @-mentions \t\t start new auction with the mentioned people";
 
 app.post('/bid', function(req, res) {
   if (req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
-    res.send("This request didn't come from Slack!");
+    res.send("This request didn't come from Slack!")
   }
+  var chan = req.body.channel_id;
+  var user = req.body.user_name;
   var text = req.body.text;
   var bids = attabid(text);
-  redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
+  redis.hgetall("beebot.auctions." + chan, function(err, obj) {
     if (obj) { //-------------------------------- active auction in this channel
       if (text === "") {
-        bidStatus(res, req.body.channel_id)
+        shout(res, bidStatus(chan))
       } else if (text.match(/help/i)) {
-        shout(res, "Currently active auction:\n" + "TODO" + "\n" + bidHelp)
+        shout(res, "Currently active auction:\n" + obj.purpose + "\n" + bidHelp)
       } else if (text.match(/abort/i)) {
-        bidEnd(req.body.channel_id);
-        // TODO: repeat the list of who's bid, then say "aborted."
-        shout(res, "Aborted.");
+        bidEnd(chan);
+        shout(res, bidStatus(chan) + "\nAborted.")
       } else if (!isEmpty(bids)) {
-        res.send("No @-mentions allowed in bids! " 
-          //+ "There is currently an active auction for " + purpose + ". "
-          + "Do `/bid abort` to end current auction or `/bid` to check status.")
+        res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
       } else {
-        redis.hset("beebot.auctions." + req.body.channel_id + ".bids", 
-          req.body.user_name, req.body.text, function(err, obj) {
-          redis.hgetall("beebot.auctions." + req.body.channel_id + ".bids", 
+        redis.hset("beebot.auctions." + chan + ".bids", 
+          user, text, function(err, obj) {
+          redis.hgetall("beebot.auctions." + chan + ".bids", 
             function(err, obj) {
             var bidSummary = ""; // Could start with "Bidding complete!\n"
             var missingBid = false;
@@ -260,15 +255,17 @@ app.post('/bid', function(req, res) {
               }
             });
             if (missingBid) {
-              res.send("Got your bid!"); // TODO: or "updated your bid"
+              res.send("Got your bid: " + text) // TODO: or "updated your bid"
             } else {
-              bidEnd(req.body.channel_id);
+              bidEnd(chan);
               bidSummary += "\nBernoulli(0.1) says " 
-                + (Math.random() < 0.1 ? "PAY 10X!!" : "no payments!");
-              shout(res, bidSummary);
+                + (Math.random() < 0.1 ? 
+                   "PAY 10X!! :money_with_wings: :moneybag: :money_mouth_face" :
+                   "no payments!");
+              shout(res, bidSummary)
             }
-          });
-        });
+          })
+        })
       }
     } else { //------------------------------- no active auction in this channel
       if (text === "") {
@@ -277,26 +274,24 @@ app.post('/bid', function(req, res) {
         res.send(bidHelp)
       } else if (text.match(/abort/i)) {
         res.send("No current auction!") // spec says shout this? shrug
-      } else if (!isEmpty(bids)) {
-        bids[req.body.user_name] = "";
+      } else if (!isEmpty(bids)) { // has @-mentions
+        bids[user] = "";
 
-        redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", bids, 
-          function(err, obj) {
-            //nothing
-          });
+        redis.hmset("beebot.auctions." + chan + ".bids", bids, 
+                    function(err, obj) { })
 
         var auction = {};
         auction.purpose = text.trim(); // includes the @-mentions; aka urtext
-        redis.hmset("beebot.auctions." + req.body.channel_id, auction, 
+        redis.hmset("beebot.auctions." + chan, auction, 
           function(err, obj) {
-            bidStatus(res, req.body.channel_id);
-          });
+            shout(res, bidStatus(chan))
+          })
       } else {
         res.send("No current auction! @-mention people to start one.")
       }
     }
-  });
-});
+  })
+})
 
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
