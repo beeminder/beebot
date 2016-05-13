@@ -215,12 +215,12 @@ app.post('/bid', function(req, res) {
 
         purpose.match(pattern).forEach(function(bidder) {
           // add the bidder's name or user ID
-        };
+        });
 
         var obj = {
           purpose: purpose,
           bidders: bidders
-        }
+        };
         redis.hmset("beebot.auctions." + req.body.channel_id, obj, function(err, obj) {
           res.send("Auction started." + statusText(obj));
         });
