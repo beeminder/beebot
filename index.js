@@ -181,10 +181,12 @@ var attabid = function(s) {
 // Returns string like "Got bids from {...}, waiting on {...}"
 var bidStatus = function(chan) {
   var status = "[init]";
+  var testx = "[init]";
   var haveBids = "Got bids from {";  //TODO: gotten, needed
   var needBids = "waiting on {";
 
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
+    testx += "[start of hgetall]";
     var haveAnyBids = false;
     var haveAnyStragglers = false;
     Object.keys(obj).forEach(function(bidder) {
@@ -197,14 +199,14 @@ var bidStatus = function(chan) {
         haveAnyStragglers = true;
       }
     });
-    //TODO: array.join(", ")
+    //TODO: array.join(", ") ?
     if (haveAnyBids)       { haveBids = haveBids.slice(0, -2); }
     haveBids += "}, ";
     if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
     status += haveBids + needBids;
   });
-  return "[testa]" + status + "[testb]"
+  return "[testa]" + status + "[testb]" + testx
 }
 
 // Deletes all the bids
@@ -270,13 +272,10 @@ app.post('/bid', function(req, res) {
         })
       }
     } else { //------------------------------- no active auction in this channel
-      if (text === "") {
-        res.send("No current auction! @-mention people to start one.")
-      } else if (text.match(/help/i)) {
-        res.send(bidHelp)
-      } else if (text.match(/abort/i)) {
-        res.send("No current auction!") // spec says shout this? shrug
-      } else if (!isEmpty(bids)) { // has @-mentions
+      if      (text === "")      { res.send("No current auction!\n" + bidHelp) }
+      else if (text.match(/help/i))  { res.send(bidHelp) }
+      else if (text.match(/abort/i)) { res.send("No current auction!") }
+      else if (!isEmpty(bids)) { // has @-mentions
         bids[user] = "";
 
         redis.hmset("beebot.auctions." + chan + ".bids", bids, 
@@ -287,8 +286,9 @@ app.post('/bid', function(req, res) {
         redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
           shout(res, bidStatus(chan))
         })
-      } else {
-        res.send("No current auction! @-mention people to start one.")
+      } else { // no @-mentions
+        res.send("No current auction!\nYour attemped bid: " + text
+          +"\nDo `/bid help` if confused.")
       }
     }
   })
