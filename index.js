@@ -178,7 +178,7 @@ var statusText = function(obj) {
       needBids += bidder.name + ",";
     }
   });
-  return "Taking bids for " obj.purpose + ". " + haveBids + "}, " + needBids + "}"
+  return "Taking bids for " + obj.purpose + ". " + haveBids + "}, " + needBids + "}";
 };
 
 app.post('/bid', function(req, res) {
