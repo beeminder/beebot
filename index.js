@@ -146,23 +146,23 @@ app.get('/debugger', function(req, res) { debugger; });
 
 app.post('/roll', function(req, res) {
   var text = req.body.text;
-  if (text.match(/^[0-9]+$/) == null) {
+  var n = parseInt(text);
+  if (isNaN(n)) {
     res.send("Pssst, this is not an integer: " + text);
     return;
   }
-  var n = parseInt(text);
   if (n <= 0) {
     res.send({
       "response_type": "in_channel",
-      "text": "Rolling " + text
+      "text": "Rolling " + n
         + "-sided die... :boom: (try again with a positive number of sides?)"
     });
     return;
   }
   res.send({
     "response_type": "in_channel",
-    "text": "Rolling " + text
-      + "-sided die... it came up " + (Math.floor(Math.random()*n)+1)
+    "text": "Rolling " + n + "-sided die... it came up " 
+    + (Math.floor(Math.random()*n)+1)
   });
 });
 
