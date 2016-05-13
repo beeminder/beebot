@@ -171,7 +171,10 @@ var statusText = function(obj) {
   // e.g. { "apb": "foo", "bee": null}
   var haveBids = "Have bids from: {";
   var needBids = "awaiting bids from: {";
+  console.log(obj);
+  console.log(Object.keys(obj));
   for (var bidder in obj.bidders) {
+    console.log("bidder:" + bidder);
     if (obj.bidders.bidder) {
       haveBids += bidder + ",";
     } else if (obj.bidders.hasOwnProperty(bidder)) {
@@ -217,13 +220,13 @@ app.post('/bid', function(req, res) {
           bidders[strippedBidder] = null;
         });
 
-        var obj = {
+        var auction = {
           purpose: text.trim(),
           bidders: bidders
         };
         console.log("channel id: " + req.body.channel_id);
         console.log(obj);
-        redis.hmset("beebot.auctions." + req.body.channel_id, obj, function(err, obj) {
+        redis.hmset("beebot.auctions." + req.body.channel_id, auction, function(err, obj) {
           res.send("Auction started. " + statusText(obj));
         });
 
