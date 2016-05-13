@@ -184,7 +184,7 @@ var statusText = function(obj) {
 app.post('/bid', function(req, res) {
   var text = req.body.text;
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
-    if (obj.length > 0) {
+    if (obj) {
       // there is an active auction in this channel
       if (text === "") {
         res.send(statusText(obj));
