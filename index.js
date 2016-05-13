@@ -202,7 +202,7 @@ var bidStatus = function(chan) {
     needBids += "}";
     status = haveBids + needBids;
   });
-  return status
+  return "[testa]" + status + "[testb]"
 }
 
 // Deletes all the bids
@@ -216,10 +216,10 @@ var bidEnd = function(chan) {
 }
 
 var bidHelp = "*Usage for the /bid command:*\n"
-+ "/bid help \t\t show this (and/or see the urtext for current auction)\n"
-+ "/bid \t\t with no args, check status of current auction (ie, who's bid)\n"
-+ "/bid stuff \t\t submit your bid (can resubmit till last person bids)\n"
-+ "/bid stuff with @-mentions \t\t start new auction with the mentioned people";
++"/bid help \t\t\t show this (and/or see the urtext for current auction)\n"
++"/bid \t\t\t\t with no args, check status of current auction (ie, who's bid)\n"
++"/bid stuff \t\t\t submit your bid (can resubmit till last person bids)\n"
++"/bid stuff with @-mentions \t\t start new auction with the mentioned people"
 
 app.post('/bid', function(req, res) {
   if (req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
@@ -282,10 +282,9 @@ app.post('/bid', function(req, res) {
 
         var auction = {};
         auction.purpose = text.trim(); // includes the @-mentions; aka urtext
-        redis.hmset("beebot.auctions." + chan, auction, 
-          function(err, obj) {
-            shout(res, bidStatus(chan))
-          })
+        redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
+          shout(res, bidStatus(chan))
+        })
       } else {
         res.send("No current auction! @-mention people to start one.")
       }
