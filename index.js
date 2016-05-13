@@ -231,8 +231,8 @@ app.post('/bid', function(req, res) {
         auction.bidders = bidders;
         console.log("channel id: " + req.body.channel_id);
         console.log(auction);
-        redis.hmset("beebot.auctions." + req.body.channel_id, auction, function(err, obj) {
-          res.send("Auction started. " + statusText(auction));
+        redis.hmset("beebot.auctions." + req.body.channel_id, JSON.stringify(auction), function(err, obj) {
+          res.send("Auction started. " + statusText(obj));
         });
 
       } else {
