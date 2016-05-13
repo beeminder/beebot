@@ -171,10 +171,7 @@ var respondWithStatusText = function(res, channelId) {
   var needBids = "awaiting bids from: {";
 
   redis.hgetall("beebot.auctions." + channelId + ".bids", function(err, obj) {
-    console.log("object");
-    console.log(obj);
     Object.keys(obj).forEach(function(bidder) {
-      console.log("bidder: " + bidder)
       if (obj[bidder].length > 0) {
         haveBids += bidder + ", ";
       } else {
@@ -186,9 +183,11 @@ var respondWithStatusText = function(res, channelId) {
 };
 
 app.post('/bid', function(req, res) {
+  if (req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
+    res.send("This request didn't come from Slack!");
+  }
   var text = req.body.text;
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
-    console.log("object: " + obj);
     if (obj) {
       // there is an active auction in this channel
       if (text === "") {
@@ -203,9 +202,18 @@ app.post('/bid', function(req, res) {
       } else if (text.match(/@/)) {
         res.send("You can't submit a bid with an @-mention. There is currently an active auction for " + obj.purpose + ". Use `/bid abort` to end the active auction or `/bid` to check status.")
       } else {
-        console.log("bid from " + req.body.user_name);
         redis.hset("beebot.auctions." + req.body.channel_id + ".bids", req.body.user_name, req.body.text, function(err, obj) {
-          res.send("Got your bid!");
+          redis.hgetall("beebot.auctions." + channelId + ".bids", function(err, obj) {
+            var bidSummary = "";
+            Object.keys(obj).forEach(function(bidder) {
+              if (obj[bidder].length > 0) {
+                bidSummary += bidder + " bid " + obj[bidder] + "\n";
+              } else {
+                res.send("Got your bid!");
+              }
+            });
+            res.send({ "text": bidSummary, "response_type": "in_channel");
+          });
         });
       }
     } else {
@@ -219,10 +227,8 @@ app.post('/bid', function(req, res) {
       } else if (text.match(pattern)) {
         var bids = {};
         text.match(pattern).forEach(function(bidder) {
-          console.log("bidder: " + bidder);
           text = text.replace(bidder, "");
           var strippedBidder = bidder.replace("@", "");
-          console.log(strippedBidder);
           bids[strippedBidder] = "";
         });
 
