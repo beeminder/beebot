@@ -159,7 +159,7 @@ app.post('/roll', function(req, res) {
     shout(res, "Rolling " + n
       + "-sided die... :boom: (try again with a positive number of sides?)");
   } else {
-    shout(res, "Rolling " + n + "-sided die... it came up " 
+    shout(res, "Rolling " + n + "-sided die... it came up "
       + (Math.floor(Math.random()*n)+1));
   }
 });
@@ -180,14 +180,18 @@ var respondWithStatusText = function(res, channelId) {
         haveAnyStragglers = true;
       }
     });
-    if (!haveAnyBids) {
+    if (haveAnyBids) {
+      haveBids += "}, ";
+    } else {
       haveBids = haveBids.slice(0, -2);
     }
-    if (!haveAnyStragglers) {
+    if (haveAnyStragglers) {
+      needBids += "}"
+    } else {
       needBids = needBids.slice(0, -2);
     }
     redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
-      res.send({ "text": "Now bidding for " + obj.purpose + ". " + haveBids + "}, " + needBids + "}", "response_type": "in_channel" });
+      res.send({ "text": "Now bidding for " + obj.purpose + ". " + haveBids + needBids, "response_type": "in_channel" });
     });
   });
 };
