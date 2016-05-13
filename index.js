@@ -176,9 +176,9 @@ var respondWithStatusText = function(res, channelId) {
     Object.keys(obj).forEach(function(bidder) {
       console.log("bidder: " + bidder)
       if (obj[bidder].length > 0) {
-        haveBids += obj[bidder] + ", ";
+        haveBids += bidder + ", ";
       } else {
-        needBids += obj[bidder] + ", ";
+        needBids += bidder + ", ";
       }
     });
     res.send(haveBids + "}, " + needBids + "}");
@@ -203,9 +203,10 @@ app.post('/bid', function(req, res) {
       } else if (text.match(/@/)) {
         res.send("You can't submit a bid with an @-mention. There is currently an active auction for " + obj.purpose + ". Use `/bid abort` to end the active auction or `/bid` to check status.")
       } else {
-        res.send("Got your bid!");
-
-        // store the bid
+        console.log("bid from " + req.body.user_name);
+        redis.hset("beebot.auctions." + req.body.channel_id + ".bids", req.body.user_name, req.body.text, function(err, obj) {
+          res.send("Got your bid!");
+        });
       }
     } else {
       // no active auction in this channel
