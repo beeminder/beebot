@@ -161,7 +161,7 @@ app.post('/roll', function(req, res) {
   }
   res.send({
     "response_type": "in_channel",
-    "text": "Rolling " + n + "-sided die... it came up " 
+    "text": "Rolling " + n + "-sided die... it came up "
     + (Math.floor(Math.random()*n)+1)
   });
 });
@@ -178,6 +178,12 @@ var respondWithStatusText = function(res, channelId) {
         needBids += bidder + ", ";
       }
     });
+    if (haveBids.length > 0) {
+      haveBids = haveBids.slice(0, -2);
+    }
+    if (needBids.length > 0) {
+      needBids = needBids.slice(0, -2);
+    }
     res.send({ "text": haveBids + "}, " + needBids + "}", "response_type": "in_channel" });
   });
 };
@@ -205,7 +211,7 @@ app.post('/bid', function(req, res) {
         respondWithStatusText(res, req.body.channel_id);
       } else if (text.match(/abort/i)) {
         endAuction(req.body.channel_id);
-        res.send({ "text": "Okay, aborted the bidding for " + purpose, "response_type": "in_channel" });
+        res.send({ "text": "Okay, aborted the bidding for " + obj.purpose, "response_type": "in_channel" });
       } else if (text.match(/@/)) {
         res.send("You can't submit a bid with an @-mention. There is currently an active auction for " + obj.purpose + ". Use `/bid abort` to end the active auction or `/bid` to check status.")
       } else {
@@ -224,6 +230,7 @@ app.post('/bid', function(req, res) {
               res.send("Got your bid!");
             } else {
               endAuction(req.body.channel_id);
+              bidSummary += "\nBernoulli(0.1) says " + (Math.random() < 0.1 ? "PAY 10X!!" : "no payments!");
               res.send({ "text": bidSummary, "response_type": "in_channel" });
             }
           });
