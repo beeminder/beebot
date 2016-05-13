@@ -238,12 +238,13 @@ app.post('/bid', function(req, res) {
       } else if (text.match(/abort/i)) {
         res.send("No current auction!");
       } else if (text.match(pattern)) {
-        var bids = { req.body.user_name : "" };
+        var bids = {};
         text.match(pattern).forEach(function(bidder) {
           text = text.replace(bidder, "");
           var strippedBidder = bidder.replace("@", "");
           bids[strippedBidder] = "";
         });
+        bids[req.body.user_name] = "";
 
         redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", bids, function(err, obj) {
           //nothing
