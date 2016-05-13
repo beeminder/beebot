@@ -180,6 +180,8 @@ var attaboy = function(s) {
   return users
 }
 
+// Want to refactor this so it just returns the string with the auction 
+// status and then the main logic decides when to shout it.
 var auctionStatus = function(res, channelId) {
   var haveBids = "Got bids from {";
   var needBids = "waiting on {";
@@ -200,6 +202,7 @@ var auctionStatus = function(res, channelId) {
     haveBids += "}, ";
     if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
+    // does the following need to be wrapped in hgetall? seems like no
     redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
       shout(res, haveBids + needBids);
     });
@@ -224,7 +227,6 @@ app.post('/bid', function(req, res) {
   var bids = attaboy(text);
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
     if (obj) { //-------------------------------- active auction in this channel
-      //var purpose = obj.purpose;
       if (text === "") {
         auctionStatus(res, req.body.channel_id);
       } else if (text.match(/abort/i)) {
@@ -275,7 +277,7 @@ app.post('/bid', function(req, res) {
           });
 
         var auction = {};
-        //auction.purpose = text.trim(); // includes the @-mentions now
+        auction.purpose = text.trim(); // includes the @-mentions; aka urtext
         redis.hmset("beebot.auctions." + req.body.channel_id, auction, 
           function(err, obj) {
             auctionStatus(res, req.body.channel_id);
