@@ -178,23 +178,17 @@ var attabid = function(s) {
   return users
 }
 
-var testglobal = "[testglobal]"
-
 // Returns string like "Got bids from {...}, waiting on {...}"
 // TODO: having it shout on its own again for now
 var bidStatus = function(res, chan) {
-  var status = "[status]";
-  var testx = "[testx]";
+  var status = "";
   var haveBids = "Got bids from {";  //TODO: gotten, needed
   var needBids = "waiting on {";
 
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
-    testx += "[start of hgetall]";
-    testglobal += "[start of hgetall]";
     var haveAnyBids = false;
     var haveAnyStragglers = false;
     Object.keys(obj).forEach(function(bidder) {
-      status += "[.]"
       if (obj[bidder].length > 0) {
         haveBids += bidder + ", ";
         haveAnyBids = true;
@@ -208,11 +202,13 @@ var bidStatus = function(res, chan) {
     haveBids += "}, ";
     if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
+    // WTF: I set status here but it's empty when i try to use it as return val
     status += haveBids + needBids;
     //shout(res, haveBids + needBids)
-    shout(res, status)
+    //shout(res, status)
   });
-  return "[testa]" + status + "[testb]" + testx + testglobal
+  shout(res, status)
+  return "[testa]" + status + "[testb]"
 }
 
 // Deletes all the bids
