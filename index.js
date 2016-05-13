@@ -180,14 +180,15 @@ var attabid = function(s) {
 
 // Returns string like "Got bids from {...}, waiting on {...}"
 var bidStatus = function(chan) {
-  var status = "";
-  var haveBids = "Got bids from {";
+  var status = "[init]";
+  var haveBids = "Got bids from {";  //TODO: gotten, needed
   var needBids = "waiting on {";
 
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
     var haveAnyBids = false;
     var haveAnyStragglers = false;
     Object.keys(obj).forEach(function(bidder) {
+      status += "[.]"
       if (obj[bidder].length > 0) {
         haveBids += bidder + ", ";
         haveAnyBids = true;
@@ -196,11 +197,12 @@ var bidStatus = function(chan) {
         haveAnyStragglers = true;
       }
     });
+    //TODO: array.join(", ")
     if (haveAnyBids)       { haveBids = haveBids.slice(0, -2); }
     haveBids += "}, ";
     if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
-    status = haveBids + needBids;
+    status += haveBids + needBids;
   });
   return "[testa]" + status + "[testb]"
 }
