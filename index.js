@@ -176,7 +176,15 @@ var respondWithStatusText = function(res, channelId) {
         needBids += bidder + ", ";
       }
     });
-    res.send({ "text": haveBids + "}, " + needBids + "}", "response_type": "in_channel" });
+    if (haveBids.length > 0) {
+      haveBids = haveBids.slice(0, -2);
+    }
+    if (needBids.length > 0) {
+      needBids = needBids.slice(0, -2);
+    }
+    redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
+      res.send({ "text": "Now bidding for " + obj.purpose + ". " + haveBids + "}, " + needBids + "}", "response_type": "in_channel" });
+    });
   });
 };
 
@@ -199,6 +207,7 @@ app.post('/bid', function(req, res) {
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
     if (obj) {
       // there is an active auction in this channel
+      var purpose = obj.purpose;
       if (text === "") {
         respondWithStatusText(res, req.body.channel_id);
       } else if (text.match(/abort/i)) {
@@ -209,7 +218,7 @@ app.post('/bid', function(req, res) {
       } else {
         redis.hset("beebot.auctions." + req.body.channel_id + ".bids", req.body.user_name, req.body.text, function(err, obj) {
           redis.hgetall("beebot.auctions." + req.body.channel_id + ".bids", function(err, obj) {
-            var bidSummary = "";
+            var bidSummary = "Completed bids for " + purpose;
             var missingBid = false;
             Object.keys(obj).forEach(function(bidder) {
               if (obj[bidder].length > 0) {
@@ -222,6 +231,7 @@ app.post('/bid', function(req, res) {
               res.send("Got your bid!");
             } else {
               endAuction(req.body.channel_id);
+              bidSummary += "\nBernoulli(0.1) says " + (Math.random() < 0.1 ? "PAY 10X!!" : "no payments!");
               res.send({ "text": bidSummary, "response_type": "in_channel" });
             }
           });
