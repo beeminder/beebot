@@ -210,6 +210,7 @@ app.post('/bid', function(req, res) {
                 bidSummary += bidder + " bid " + obj[bidder] + "\n";
               } else {
                 res.send("Got your bid!");
+                return;
               }
             });
             res.send({ "text": bidSummary, "response_type": "in_channel" });
