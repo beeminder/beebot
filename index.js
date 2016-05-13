@@ -182,6 +182,17 @@ var respondWithStatusText = function(res, channelId) {
   });
 };
 
+var endAuction = function(channelId) {
+  redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
+    var purpose = obj.purpose;
+    redis.del("beebot.auctions." + req.body.channel_id, function(err, obj) {
+      redis.del("beebot.auctions." + req.body.channel_id + ".bids", function(err, obj) {
+        res.send({ "text": "Okay, aborted the bidding for " + purpose, "response_type": "in_channel" });
+      });
+    });
+  });
+}
+
 app.post('/bid', function(req, res) {
   if (req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
     res.send("This request didn't come from Slack!");
@@ -193,12 +204,7 @@ app.post('/bid', function(req, res) {
       if (text === "") {
         respondWithStatusText(res, req.body.channel_id);
       } else if (text.match(/abort/i)) {
-        var purpose = obj.purpose;
-        redis.del("beebot.auctions." + req.body.channel_id, function(err, obj) {
-          redis.del("beebot.auctions." + req.body.channel_id + ".bids", function(err, obj) {
-            res.send({ "text": "Okay, aborted the bidding for " + purpose, "response_type": "in_channel" });
-          });
-        });
+        endAuction(req.body.channel_id)
       } else if (text.match(/@/)) {
         res.send("You can't submit a bid with an @-mention. There is currently an active auction for " + obj.purpose + ". Use `/bid abort` to end the active auction or `/bid` to check status.")
       } else {
@@ -216,6 +222,7 @@ app.post('/bid', function(req, res) {
             if (missingBid) {
               res.send("Got your bid!");
             } else {
+              endAuction(req.body.channel_id);
               res.send({ "text": bidSummary, "response_type": "in_channel" });
             }
           });
@@ -243,8 +250,6 @@ app.post('/bid', function(req, res) {
 
         var auction = {};
         auction.purpose = text.trim();
-        auction.response_url = req.body.response_url;
-
         redis.hmset("beebot.auctions." + req.body.channel_id, auction, function(err, obj) {
           respondWithStatusText(res, req.body.channel_id);
         });
