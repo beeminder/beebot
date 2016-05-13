@@ -144,26 +144,24 @@ app.post('/zeno', function(req, res) {
 
 app.get('/debugger', function(req, res) { debugger; });
 
+// Say the string txt to everyone in the channel
+var shout = function(res, txt) {
+  res.send({ "response_type": "in_channel",
+             "text"         : txt })
+}
+
 app.post('/roll', function(req, res) {
   var text = req.body.text;
   var n = parseInt(text);
   if (isNaN(n)) {
     res.send("Pssst, this is not an integer: " + text);
-    return;
+  } else if (n <= 0) {
+    shout(res, "Rolling " + n
+      + "-sided die... :boom: (try again with a positive number of sides?)");
+  } else {
+    shout(res, "Rolling " + n + "-sided die... it came up " 
+      + (Math.floor(Math.random()*n)+1));
   }
-  if (n <= 0) {
-    res.send({
-      "response_type": "in_channel",
-      "text": "Rolling " + n
-        + "-sided die... :boom: (try again with a positive number of sides?)"
-    });
-    return;
-  }
-  res.send({
-    "response_type": "in_channel",
-    "text": "Rolling " + n + "-sided die... it came up " 
-    + (Math.floor(Math.random()*n)+1)
-  });
 });
 
 var respondWithStatusText = function(res, channelId) {
