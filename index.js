@@ -185,7 +185,7 @@ app.post('/bid', function(req, res) {
   var text = req.body.text;
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
     console.log("object: " + obj);
-    if (obj && obj.length > 0) {
+    if (obj && Object.keys(obj).length > 0) {
       // there is an active auction in this channel
       if (text === "") {
         res.send(statusText(obj));
@@ -214,7 +214,7 @@ app.post('/bid', function(req, res) {
           console.log("bidder: " + bidder);
           text = text.replace(bidder, "");
           var strippedBidder = bidder.replace("@", "");
-          bidders.strippedBidder = null;
+          bidders[strippedBidder] = null;
         });
 
         var obj = {
