@@ -205,15 +205,19 @@ app.post('/bid', function(req, res) {
         redis.hset("beebot.auctions." + req.body.channel_id + ".bids", req.body.user_name, req.body.text, function(err, obj) {
           redis.hgetall("beebot.auctions." + req.body.channel_id + ".bids", function(err, obj) {
             var bidSummary = "";
+            var missingBid = false;
             Object.keys(obj).forEach(function(bidder) {
               if (obj[bidder].length > 0) {
                 bidSummary += bidder + " bid " + obj[bidder] + "\n";
               } else {
-                res.send("Got your bid!");
-                return;
+                missingBid = true;
               }
             });
-            res.send({ "text": bidSummary, "response_type": "in_channel" });
+            if (missingBid) {
+              res.send("Got your bid!");
+            } else {
+              res.send({ "text": bidSummary, "response_type": "in_channel" });
+            }
           });
         });
       }
