@@ -228,14 +228,6 @@ app.post('/bid', function(req, res) {
       }
     }
   });
-
-  redis.hmset("beebot.teamid." + req.body.team_id,
-    { bot_access_token: req.body.bot_access_token },
-    function(err, obj) {
-      startBot(req.body.team_id);
-      res.send("OK");
-    }
-  );
 });
 
 app.listen(app.get('port'), function() {
