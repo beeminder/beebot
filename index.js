@@ -224,11 +224,11 @@ app.post('/bid', function(req, res) {
       } else {
         redis.hset("beebot.auctions." + req.body.channel_id + ".bids", req.body.user_name, req.body.text, function(err, obj) {
           redis.hgetall("beebot.auctions." + req.body.channel_id + ".bids", function(err, obj) {
-            var bidSummary = "Completed bids for " + purpose + "\n";
+            var bidSummary = "Completed bids for " + purpose + ":\n";
             var missingBid = false;
             Object.keys(obj).forEach(function(bidder) {
               if (obj[bidder].length > 0) {
-                bidSummary += bidder + " bid " + obj[bidder] + ":\n";
+                bidSummary += bidder + " bid " + obj[bidder] + "\n";
               } else {
                 missingBid = true;
               }
