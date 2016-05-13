@@ -182,7 +182,7 @@ var respondWithStatusText = function(res, channelId) {
     if (needBids.length > 0) {
       needBids = needBids.slice(0, -2);
     }
-    redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
+    redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
       res.send({ "text": "Now bidding for " + obj.purpose + ". " + haveBids + "}, " + needBids + "}", "response_type": "in_channel" });
     });
   });
