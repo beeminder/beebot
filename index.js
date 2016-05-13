@@ -185,8 +185,8 @@ var respondWithStatusText = function(res, channelId) {
 var endAuction = function(channelId) {
   redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
     var purpose = obj.purpose;
-    redis.del("beebot.auctions." + req.body.channel_id, function(err, obj) {
-      redis.del("beebot.auctions." + req.body.channel_id + ".bids", function(err, obj) {
+    redis.del("beebot.auctions." + channelId, function(err, obj) {
+      redis.del("beebot.auctions." + channelId + ".bids", function(err, obj) {
         res.send({ "text": "Okay, aborted the bidding for " + purpose, "response_type": "in_channel" });
       });
     });
