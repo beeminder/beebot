@@ -172,15 +172,15 @@ var statusText = function(obj) {
   var haveBids = "Have bids from: {";
   var needBids = "awaiting bids from: {";
   console.log(obj);
-  console.log(Object.keys(obj.bidders));
-  for (var bidder in Object.keys(obj.bidders)) {
+
+  Object.keys(obj.bidders).forEach(function(bidder) {
     console.log("bidder:" + bidder);
     if (obj.bidders[bidder]) {
       haveBids += bidder + ",";
     } else if (obj.bidders.hasOwnProperty(bidder)) {
       needBids += bidder + ",";
     }
-  };
+  });
   return "Taking bids for " + obj.purpose + ". " + haveBids + "}, " + needBids + "}";
 };
 
