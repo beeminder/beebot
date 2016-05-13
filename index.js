@@ -178,15 +178,18 @@ var attabid = function(s) {
   return users
 }
 
+var testglobal = "[testglobal]"
+
 // Returns string like "Got bids from {...}, waiting on {...}"
 var bidStatus = function(chan) {
-  var status = "[init]";
-  var testx = "[init]";
+  var status = "[status]";
+  var testx = "[testx]";
   var haveBids = "Got bids from {";  //TODO: gotten, needed
   var needBids = "waiting on {";
 
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
     testx += "[start of hgetall]";
+    testglobal += "[start of hgetall]";
     var haveAnyBids = false;
     var haveAnyStragglers = false;
     Object.keys(obj).forEach(function(bidder) {
@@ -206,7 +209,7 @@ var bidStatus = function(chan) {
     needBids += "}";
     status += haveBids + needBids;
   });
-  return "[testa]" + status + "[testb]" + testx
+  return "[testa]" + status + "[testb]" + testx + testglobal
 }
 
 // Deletes all the bids
