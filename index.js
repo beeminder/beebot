@@ -177,11 +177,13 @@ var statusText = function(obj) {
     return "crap";
   }
 
-  Object.keys(obj.bidders).forEach(function(bidder) {
+  var bidders = JSON.parse(obj.bidders);
+
+  Object.keys(bidders).forEach(function(bidder) {
     console.log("bidder:" + bidder);
-    if (obj.bidders[bidder]) {
+    if (bidders[bidder]) {
       haveBids += bidder + ",";
-    } else if (obj.bidders.hasOwnProperty(bidder)) {
+    } else if (bidders.hasOwnProperty(bidder)) {
       needBids += bidder + ",";
     }
   });
@@ -228,11 +230,11 @@ app.post('/bid', function(req, res) {
 
         var auction = {};
         auction.purpose = text.trim();
-        auction.bidders = bidders;
+        auction.bidders = JSON.stringify(bidders);
         console.log("channel id: " + req.body.channel_id);
         console.log(auction);
-        redis.hmset("beebot.auctions." + req.body.channel_id, JSON.stringify(auction), function(err, obj) {
-          res.send("Auction started. " + statusText(auction));
+        redis.hmset("beebot.auctions." + req.body.channel_id, auction, function(err, obj) {
+          res.send("Auction started. " + statusText(obj));
         });
 
       } else {
