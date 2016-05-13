@@ -199,6 +199,8 @@ app.post('/bid', function(req, res) {
         res.send("You can't submit a bid with an @-mention. There is currently an active auction for " + obj.purpose + ". Use `/bid abort` to end the active auction or `/bid` to check status.")
       } else {
         res.send("Got your bid!");
+
+        // store the bid
       }
     } else {
       // no active auction in this channel
@@ -213,10 +215,10 @@ app.post('/bid', function(req, res) {
           console.log("bidder: " + bidder);
           text = text.replace(bidder, "");
           var strippedBidder = bidder.replace("@", "");
-          bidders[strippedBidder] = null;
+
           console.log(bidders);
           console.log(bidders[strippedBidder]);
-          redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", { bidder.replace("@", "") : null }, function(err, obj) {
+          redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", { strippedBidder : "" }, function(err, obj) {
             //nothing
           });
         });
