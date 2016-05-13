@@ -180,9 +180,9 @@ var attaboy = function(s) {
   return users
 }
 
-var respondWithStatusText = function(res, channelId) {
-  var haveBids = "Have bids from: {";
-  var needBids = "awaiting bids from: {";
+var auctionStatus = function(res, channelId) {
+  var haveBids = "Got bids from {";
+  var needBids = "waiting on {";
 
   redis.hgetall("beebot.auctions." + channelId + ".bids", function(err, obj) {
     var haveAnyBids = false;
@@ -201,14 +201,13 @@ var respondWithStatusText = function(res, channelId) {
     if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
     redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
-      shout(res, "Now bidding for " + obj.purpose + ". " + haveBids + needBids);
+      shout(res, haveBids + needBids);
     });
   });
 };
 
-var endAuction = function(channelId) {
+var auctionEnd = function(channelId) {
   redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
-    //var purpose = obj.purpose;  // this was vestigial and can be deleted, yes?
     redis.del("beebot.auctions." + channelId, function(err, obj) {
       redis.del("beebot.auctions." + channelId + ".bids", function(err, obj) {
         // nothing
@@ -224,16 +223,16 @@ app.post('/bid', function(req, res) {
   var text = req.body.text;
   var bids = attaboy(text);
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
-    if (obj) {
-      // there is an active auction in this channel
-      var purpose = obj.purpose;
+    if (obj) { //-------------------------------- active auction in this channel
+      //var purpose = obj.purpose;
       if (text === "") {
-        respondWithStatusText(res, req.body.channel_id);
+        auctionStatus(res, req.body.channel_id);
       } else if (text.match(/abort/i)) {
-        endAuction(req.body.channel_id);
-        shout(res, "Okay, aborted the bidding for " + purpose);
+        auctionEnd(req.body.channel_id);
+        // TODO: repeat the list of who's bid, then say "aborted."
+        shout(res, "Aborted.");
       } else if (!isEmpty(bids)) {
-        res.send("You can't submit a bid with an @-mention. " 
+        res.send("No @-mentions allowed in bids! " 
           //+ "There is currently an active auction for " + purpose + ". "
           + "Do `/bid abort` to end current auction or `/bid` to check status.")
       } else {
@@ -241,11 +240,11 @@ app.post('/bid', function(req, res) {
           req.body.user_name, req.body.text, function(err, obj) {
           redis.hgetall("beebot.auctions." + req.body.channel_id + ".bids", 
             function(err, obj) {
-            var bidSummary = "Completed bids for " + purpose + ":\n";
+            var bidSummary = ""; // Could start with "Bidding complete!\n"
             var missingBid = false;
             Object.keys(obj).forEach(function(bidder) {
               if (obj[bidder].length > 0) {
-                bidSummary += bidder + " bid " + obj[bidder] + "\n";
+                bidSummary += bidder + ": " + obj[bidder] + "\n";
               } else {
                 missingBid = true;
               }
@@ -253,7 +252,7 @@ app.post('/bid', function(req, res) {
             if (missingBid) {
               res.send("Got your bid!"); // TODO: or "updated your bid"
             } else {
-              endAuction(req.body.channel_id);
+              auctionEnd(req.body.channel_id);
               bidSummary += "\nBernoulli(0.1) says " 
                 + (Math.random() < 0.1 ? "PAY 10X!!" : "no payments!");
               shout(res, bidSummary);
@@ -261,21 +260,13 @@ app.post('/bid', function(req, res) {
           });
         });
       }
-    } else {
-      // no active auction in this channel
-      var pattern = /\B@[a-z0-9_-]+/gi; // regex for @-mentions HT StackOverflow
+    } else { //------------------------------- no active auction in this channel
 
       if (text === "") {
         res.send("No current auction! @-mention people to start one.");
       } else if (text.match(/abort/i)) {
         res.send("No current auction!"); // spec says shout this? shrug
       } else if (!isEmpty(bids)) {
-        //var bids = {};                                   //SCHDEL
-        //text.match(pattern).forEach(function(bidder) {
-        //  text = text.replace(bidder, "");
-        //  var strippedBidder = bidder.replace("@", "");
-        //  bids[strippedBidder] = "";
-        //});
         bids[req.body.user_name] = "";
 
         redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", bids, 
@@ -284,10 +275,10 @@ app.post('/bid', function(req, res) {
           });
 
         var auction = {};
-        auction.purpose = text.trim(); // includes the @-mentions now
+        //auction.purpose = text.trim(); // includes the @-mentions now
         redis.hmset("beebot.auctions." + req.body.channel_id, auction, 
           function(err, obj) {
-            respondWithStatusText(res, req.body.channel_id);
+            auctionStatus(res, req.body.channel_id);
           });
       } else {
         res.send("No current auction! @-mention people to start one.")
