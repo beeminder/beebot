@@ -209,7 +209,8 @@ var bidStatus = function(res, chan) {
     if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
     status += haveBids + needBids;
-    shout(res, haveBids + needBids)
+    //shout(res, haveBids + needBids)
+    shout(res, status)
   });
   return "[testa]" + status + "[testb]" + testx + testglobal
 }
@@ -270,7 +271,7 @@ app.post('/bid', function(req, res) {
               bidEnd(chan);
               bidSummary += "\nBernoulli(0.1) says " 
                 + (Math.random() < 0.1 ? 
-                   "PAY 10X! :money_with_wings: :moneybag: :money_mouth_face" :
+                   "PAY 10X! :money_with_wings: :moneybag: :money_mouth_face:" :
                    "no payments!");
               shout(res, bidSummary)
             }
