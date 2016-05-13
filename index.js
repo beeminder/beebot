@@ -202,13 +202,12 @@ var bidStatus = function(res, chan) {
     haveBids += "}, ";
     if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
-    // WTF: I set status here but it's empty when i try to use it as return val
+    // WTF1: I set status here and it's fine...
     status += haveBids + needBids;
-    //shout(res, haveBids + needBids)
-    //shout(res, status)
+    shout(res, status)
   });
-  shout(res, status)
-  return "[testa]" + status + "[testb]"
+  // WTF2: ...but status is back to the empty string here
+  return status
 }
 
 // Deletes all the bids
