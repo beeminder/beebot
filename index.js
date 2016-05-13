@@ -189,7 +189,7 @@ var respondWithStatusText = function(res, channelId) {
     }
     needBids += "}";
     redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
-      res.send({ "text": "Now bidding for " + obj.purpose + ". " + haveBids + needBids, "response_type": "in_channel" });
+      shout(res, "Now bidding for " + obj.purpose + ". " + haveBids + needBids);
     });
   });
 };
@@ -218,12 +218,16 @@ app.post('/bid', function(req, res) {
         respondWithStatusText(res, req.body.channel_id);
       } else if (text.match(/abort/i)) {
         endAuction(req.body.channel_id);
-        res.send({ "text": "Okay, aborted the bidding for " + purpose, "response_type": "in_channel" });
+        shout(res, "Okay, aborted the bidding for " + purpose);
       } else if (text.match(/@/)) {
-        res.send("You can't submit a bid with an @-mention. There is currently an active auction for " + obj.purpose + ". Use `/bid abort` to end the active auction or `/bid` to check status.")
+        res.send("You can't submit a bid with an @-mention. " 
+          + "There is currently an active auction for " + obj.purpose + ". "
+          + "Do `/bid abort` to end current auction or `/bid` to check status.")
       } else {
-        redis.hset("beebot.auctions." + req.body.channel_id + ".bids", req.body.user_name, req.body.text, function(err, obj) {
-          redis.hgetall("beebot.auctions." + req.body.channel_id + ".bids", function(err, obj) {
+        redis.hset("beebot.auctions." + req.body.channel_id + ".bids", 
+          req.body.user_name, req.body.text, function(err, obj) {
+          redis.hgetall("beebot.auctions." + req.body.channel_id + ".bids", 
+            function(err, obj) {
             var bidSummary = "Completed bids for " + purpose + ":\n";
             var missingBid = false;
             Object.keys(obj).forEach(function(bidder) {
@@ -237,15 +241,16 @@ app.post('/bid', function(req, res) {
               res.send("Got your bid!");
             } else {
               endAuction(req.body.channel_id);
-              bidSummary += "\nBernoulli(0.1) says " + (Math.random() < 0.1 ? "PAY 10X!!" : "no payments!");
-              res.send({ "text": bidSummary, "response_type": "in_channel" });
+              bidSummary += "\nBernoulli(0.1) says " 
+                + (Math.random() < 0.1 ? "PAY 10X!!" : "no payments!");
+              shout(res, bidSummary);
             }
           });
         });
       }
     } else {
       // no active auction in this channel
-      var pattern = /\B@[a-z0-9_-]+/gi; // regex for @-mentions, thanks StackOverflow.
+      var pattern = /\B@[a-z0-9_-]+/gi; // regex for @-mentions HT StackOverflow
 
       if (text === "") {
         res.send("No current auction! @-mention people to start one.");
@@ -260,16 +265,17 @@ app.post('/bid', function(req, res) {
         });
         bids[req.body.user_name] = "";
 
-        redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", bids, function(err, obj) {
-          //nothing
-        });
+        redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", bids, 
+          function(err, obj) {
+            //nothing
+          });
 
         var auction = {};
         auction.purpose = text.trim();
-        redis.hmset("beebot.auctions." + req.body.channel_id, auction, function(err, obj) {
-          respondWithStatusText(res, req.body.channel_id);
-        });
-
+        redis.hmset("beebot.auctions." + req.body.channel_id, auction, 
+          function(err, obj) {
+            respondWithStatusText(res, req.body.channel_id);
+          });
       } else {
         res.send("No current auction! @-mention people to start one.")
       }
