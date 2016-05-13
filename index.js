@@ -25,13 +25,13 @@ var handleMessage = function(rtm, message) {
   if (message.text.match(new RegExp(regexpString))) {
     // remove the @-mention of the bot from the message
     var tokenized = message.text.split(/\s/);
-    tokenized = tokenized.filter(function(e) { 
+    tokenized = tokenized.filter(function(e) {
       return !e.match(new RegExp(regexpString)) });
     text = tokenized.join(" ");
   }
-  https.get("https://www.beeminder.com/slackbot?command=" 
-    + encodeURIComponent(text) + "&team_id=" 
-    + message.team + "&user_id=" + message.user, 
+  https.get("https://www.beeminder.com/slackbot?command="
+    + encodeURIComponent(text) + "&team_id="
+    + message.team + "&user_id=" + message.user,
     function(res) {
       var resText = '';
       res.on("data", function(chunk) { resText += chunk; });
@@ -92,12 +92,13 @@ var startBot = function(teamId) {
 app.set('port', (process.env.PORT || 5000));
 
 app.post('/bot', function(req, res) {
-  redis.hmset("beebot.teamid." + req.body.team_id, 
-    { bot_access_token: req.body.bot_access_token }, 
+  redis.hmset("beebot.teamid." + req.body.team_id,
+    { bot_access_token: req.body.bot_access_token },
     function(err, obj) {
       startBot(req.body.team_id);
       res.send("OK");
-    });
+    }
+  );
 });
 
 app.delete('/bot', function(req, res) {
@@ -107,7 +108,7 @@ app.delete('/bot', function(req, res) {
 });
 
 app.post('/zeno', function(req, res) {
-  var rtm = bots.filter(function(b) { 
+  var rtm = bots.filter(function(b) {
     return b.teamId === req.body.team_id; })[0];
   if (rtm === null) { res.send("500"); return; }
   var WebClient = require('@slack/client').WebClient;
@@ -148,36 +149,96 @@ app.post('/roll', function(req, res) {
   if (text.match(/^[0-9]+$/) == null) {
     res.send("Pssst, this is not an integer: " + text);
     return;
-  } 
+  }
   var n = parseInt(text);
   if (n <= 0) {
     res.send({
       "response_type": "in_channel",
-      "text": "Rolling " + text 
+      "text": "Rolling " + text
         + "-sided die... :boom: (try again with a positive number of sides?)"
     });
     return;
   }
   res.send({
     "response_type": "in_channel",
-    "text": "Rolling " + text 
+    "text": "Rolling " + text
       + "-sided die... it came up " + (Math.floor(Math.random()*n)+1)
   });
 });
 
+var statusText = function(obj) {
+  // hash of strings : hash
+  // e.g. { "U12345": { "name": "Andy", "bid": "foo" }, "U54321": { "name": "Bee", "bid": "bar"}}
+  var haveBids = "Have bids from: {";
+  var needBids = "awaiting bids from: {";
+  obj.bidders.forEach(function(bidder) {
+    if (bidder.bid) {
+      haveBids += bidder.name + ",";
+    } else {
+      needBids += bidder.name + ",";
+    }
+  });
+  return "Taking bids for " obj.purpose + ". " + haveBids + "}, " + needBids + "}"
+};
+
 app.post('/bid', function(req, res) {
   var text = req.body.text;
-  var user = req.body.user_id;
-  res.send("Bidding is only stubbed out.\n"
-    + "User: " + user + "\n"
-    + "Text: " + text
+  res.send(req.body);
+  return;
+  redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
+    if (obj.length > 0) {
+      // there is an active auction in this channel
+      if (text === "") {
+        res.send(statusText(obj));
+      } else if (text.match(/abort/i) {
+        var purpose = obj.purpose;
+        redis.hmset("beebot.auctions." + req.body.channel_id, {}, function(err, obj) {
+          res.send("Okay, aborted the bidding for " + purpose);
+        });
+      } else if (text.match(/<@/)) {
+        res.send("You can't submit a bid with an @-mention. There is currently an active auction for " + obj.purpose + ". Use `/bid abort` to end the active auction or `/bid` to check status.")
+      } else {
+        res.send("Got your bid! " + statusText(obj))
+      }
+    } else {
+      // no active auction in this channel
+      var pattern = /\B@[a-z0-9_-]+/gi; // regex for @-mentions, thanks StackOverflow.
+
+      if (text === "") {
+        res.send("No current auction! @-mention people to start one.");
+      } else if (text.match(/abort/i) {
+        res.send("No current auction!");
+      } else if (text.match(pattern)) {
+        var bidders = {};
+        var purpose = "";
+
+
+        purpose.match(pattern).forEach(function(bidder) {
+          // add the bidder's name or user ID
+        };
+
+        var obj = {
+          purpose: purpose,
+          bidders: bidders
+        }
+        redis.hmset("beebot.auctions." + req.body.channel_id, obj, function(err, obj) {
+          res.send("Auction started." + statusText(obj));
+        });
+
+      } else {
+        res.send("No current auction! @-mention people to start one.")
+      }
+    }
+  };
+
+  redis.hmset("beebot.teamid." + req.body.team_id,
+    { bot_access_token: req.body.bot_access_token },
+    function(err, obj) {
+      startBot(req.body.team_id);
+      res.send("OK");
+    }
   );
 });
-
-app.post('/slashtest', function(req, res) {
-  res.send("You invoked the slashtest command. This is a whispered response.");
-});
-
 
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
