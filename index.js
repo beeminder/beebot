@@ -171,7 +171,7 @@ var isEmpty = function(obj) {
 }
 
 // Returns a hash of usernames (without the @'s) who are @-mentioned in s
-var attaboy = function(s) {
+var attabid = function(s) {
   var pattern = /\B@[a-z0-9_-]+/gi; // regex for @-mentions, HT StackOverflow
   var users = {};
   if (s.match(pattern)) {
@@ -182,7 +182,7 @@ var attaboy = function(s) {
 
 // Want to refactor this so it just returns the string with the auction 
 // status and then the main logic decides when to shout it.
-var auctionStatus = function(res, channelId) {
+var bidStatus = function(res, channelId) {
   var haveBids = "Got bids from {";
   var needBids = "waiting on {";
 
@@ -204,12 +204,12 @@ var auctionStatus = function(res, channelId) {
     needBids += "}";
     // does the following need to be wrapped in hgetall? seems like no
     //redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
-      shout(res, haveBids + needBids);
-    //});
+    shout(res, haveBids + needBids);
+    //});   // but if bidStatus wanted to include urtext we'd need this wrapper?
   });
 };
 
-var auctionEnd = function(channelId) {
+var bidEnd = function(channelId) {
   redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
     redis.del("beebot.auctions." + channelId, function(err, obj) {
       redis.del("beebot.auctions." + channelId + ".bids", function(err, obj) {
@@ -219,18 +219,26 @@ var auctionEnd = function(channelId) {
   });
 }
 
+var bidHelp = "*Usage for the /bid command:*\n"
+  + "/bid help -- duh, that's why you're seeing this\n"
+  + "/bid -- with no args, checks on the status of the current auction\n"
+  + "/bid stuff -- submits your bid (can repeat it till last person bids\n"
+  + "/bid stuff with @-mentions -- starts a new auction with the some people";
+
 app.post('/bid', function(req, res) {
   if (req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
     res.send("This request didn't come from Slack!");
   }
   var text = req.body.text;
-  var bids = attaboy(text);
+  var bids = attabid(text);
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
     if (obj) { //-------------------------------- active auction in this channel
       if (text === "") {
-        auctionStatus(res, req.body.channel_id);
-      } else if (text.match(/abort/i)) {
-        auctionEnd(req.body.channel_id);
+        bidStatus(res, req.body.channel_id);
+      } else if (text.match(/help/i)) {
+        shout(res, "Currently active auction:\n", obj.purpose, "\n", bidHelp)
+      } else if (text.match(/abort/i))Commands are /bid help (duh), /bid  {
+        bidEnd(req.body.channel_id);
         // TODO: repeat the list of who's bid, then say "aborted."
         shout(res, "Aborted.");
       } else if (!isEmpty(bids)) {
@@ -254,7 +262,7 @@ app.post('/bid', function(req, res) {
             if (missingBid) {
               res.send("Got your bid!"); // TODO: or "updated your bid"
             } else {
-              auctionEnd(req.body.channel_id);
+              bidEnd(req.body.channel_id);
               bidSummary += "\nBernoulli(0.1) says " 
                 + (Math.random() < 0.1 ? "PAY 10X!!" : "no payments!");
               shout(res, bidSummary);
@@ -263,9 +271,10 @@ app.post('/bid', function(req, res) {
         });
       }
     } else { //------------------------------- no active auction in this channel
-
       if (text === "") {
         res.send("No current auction! @-mention people to start one.");
+      } else if (text.match(/help/i)) {}
+        res.send(bidHelp)
       } else if (text.match(/abort/i)) {
         res.send("No current auction!"); // spec says shout this? shrug
       } else if (!isEmpty(bids)) {
@@ -280,7 +289,7 @@ app.post('/bid', function(req, res) {
         auction.purpose = text.trim(); // includes the @-mentions; aka urtext
         redis.hmset("beebot.auctions." + req.body.channel_id, auction, 
           function(err, obj) {
-            auctionStatus(res, req.body.channel_id);
+            bidStatus(res, req.body.channel_id);
           });
       } else {
         res.send("No current auction! @-mention people to start one.")
