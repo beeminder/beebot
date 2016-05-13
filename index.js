@@ -171,7 +171,10 @@ var respondWithStatusText = function(res, channelId) {
   var needBids = "awaiting bids from: {";
 
   redis.hgetall("beebot.auctions." + channelId + ".bids", function(err, obj) {
+    console.log("object");
+    console.log(obj);
     Object.keys(obj).forEach(function(bidder) {
+      console.log("bidder: " + bidder)
       if (obj[bidder]) {
         haveBids += obj[bidder];
       } else {
@@ -211,14 +214,17 @@ app.post('/bid', function(req, res) {
       } else if (text.match(/abort/i)) {
         res.send("No current auction!");
       } else if (text.match(pattern)) {
+        var bids = {};
         text.match(pattern).forEach(function(bidder) {
           console.log("bidder: " + bidder);
           text = text.replace(bidder, "");
           var strippedBidder = bidder.replace("@", "");
           console.log(strippedBidder);
-          redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", { strippedBidder : "" }, function(err, obj) {
-            //nothing
-          });
+          bids[strippedBidder] = null;
+        });
+
+        redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", bids, function(err, obj) {
+          //nothing
         });
 
         var auction = {};
