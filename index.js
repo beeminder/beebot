@@ -169,17 +169,21 @@ var respondWithStatusText = function(res, channelId) {
   var needBids = "awaiting bids from: {";
 
   redis.hgetall("beebot.auctions." + channelId + ".bids", function(err, obj) {
+    var haveAnyBids = false;
+    var haveAnyStragglers = false;
     Object.keys(obj).forEach(function(bidder) {
       if (obj[bidder].length > 0) {
         haveBids += bidder + ", ";
+        haveAnyBids = true;
       } else {
         needBids += bidder + ", ";
+        haveAnyStragglers = true;
       }
     });
-    if (haveBids.length > 0) {
+    if (!haveAnyBids) {
       haveBids = haveBids.slice(0, -2);
     }
-    if (needBids.length > 0) {
+    if (!haveAnyStragglers) {
       needBids = needBids.slice(0, -2);
     }
     redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
@@ -218,11 +222,11 @@ app.post('/bid', function(req, res) {
       } else {
         redis.hset("beebot.auctions." + req.body.channel_id + ".bids", req.body.user_name, req.body.text, function(err, obj) {
           redis.hgetall("beebot.auctions." + req.body.channel_id + ".bids", function(err, obj) {
-            var bidSummary = "Completed bids for " + purpose;
+            var bidSummary = "Completed bids for " + purpose + "\n";
             var missingBid = false;
             Object.keys(obj).forEach(function(bidder) {
               if (obj[bidder].length > 0) {
-                bidSummary += bidder + " bid " + obj[bidder] + "\n";
+                bidSummary += bidder + " bid " + obj[bidder] + ":\n";
               } else {
                 missingBid = true;
               }
