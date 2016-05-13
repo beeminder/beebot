@@ -190,7 +190,7 @@ app.post('/bid', function(req, res) {
       // there is an active auction in this channel
       if (text === "") {
         res.send(statusText(obj));
-      } else if (text.match(/abort/i) {
+      } else if (text.match(/abort/i)) {
         var purpose = obj.purpose;
         redis.hmset("beebot.auctions." + req.body.channel_id, {}, function(err, obj) {
           res.send("Okay, aborted the bidding for " + purpose);
@@ -206,7 +206,7 @@ app.post('/bid', function(req, res) {
 
       if (text === "") {
         res.send("No current auction! @-mention people to start one.");
-      } else if (text.match(/abort/i) {
+      } else if (text.match(/abort/i)) {
         res.send("No current auction!");
       } else if (text.match(pattern)) {
         var bidders = {};
@@ -229,7 +229,7 @@ app.post('/bid', function(req, res) {
         res.send("No current auction! @-mention people to start one.")
       }
     }
-  };
+  });
 
   redis.hmset("beebot.teamid." + req.body.team_id,
     { bot_access_token: req.body.bot_access_token },
