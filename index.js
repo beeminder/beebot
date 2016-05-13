@@ -191,10 +191,10 @@ app.post('/bid', function(req, res) {
         res.send(statusText(obj));
       } else if (text.match(/abort/i)) {
         var purpose = obj.purpose;
-        redis.hmset("beebot.auctions." + req.body.channel_id, {}, function(err, obj) {
+        redis.del("beebot.auctions." + req.body.channel_id, function(err, obj) {
           res.send("Okay, aborted the bidding for " + purpose);
         });
-      } else if (text.match(/<@/)) {
+      } else if (text.match(/@/)) {
         res.send("You can't submit a bid with an @-mention. There is currently an active auction for " + obj.purpose + ". Use `/bid abort` to end the active auction or `/bid` to check status.")
       } else {
         res.send("Got your bid! " + statusText(obj))
