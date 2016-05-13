@@ -203,9 +203,9 @@ var bidStatus = function(res, channelId) {
     if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
     // does the following need to be wrapped in hgetall? seems like no
-    //redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
-    shout(res, haveBids + needBids);
-    //});   // but if bidStatus wanted to include urtext we'd need this wrapper?
+    redis.hgetall("beebot.auctions." + channelId, function(err, obj) {
+      shout(res, haveBids + needBids);
+    });   // but if bidStatus wanted to include urtext we'd need this wrapper?
   });
 };
 
