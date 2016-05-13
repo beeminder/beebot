@@ -171,20 +171,20 @@ var statusText = function(obj) {
   // e.g. { "apb": "foo", "bee": null}
   var haveBids = "Have bids from: {";
   var needBids = "awaiting bids from: {";
-  Object.keys(obj.bidders).forEach(function(bidder) {
+  for (var bidder in obj.bidders) {
     if (obj.bidders.bidder) {
       haveBids += bidder + ",";
-    } else {
+    } else if (obj.bidders.hasOwnProperty(bidder)) {
       needBids += bidder + ",";
     }
-  });
+  };
   return "Taking bids for " + obj.purpose + ". " + haveBids + "}, " + needBids + "}";
 };
 
 app.post('/bid', function(req, res) {
   var text = req.body.text;
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
-    if (obj) {
+    if (obj && obj.length > 0) {
       // there is an active auction in this channel
       if (text === "") {
         res.send(statusText(obj));
