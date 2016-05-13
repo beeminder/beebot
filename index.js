@@ -175,10 +175,10 @@ var respondWithStatusText = function(res, channelId) {
     console.log(obj);
     Object.keys(obj).forEach(function(bidder) {
       console.log("bidder: " + bidder)
-      if (obj[bidder]) {
-        haveBids += obj[bidder];
+      if (obj[bidder].length > 0) {
+        haveBids += obj[bidder] + ", ";
       } else {
-        needBids += obj[bidder];
+        needBids += obj[bidder] + ", ";
       }
     });
     res.send(haveBids + "}, " + needBids + "}");
@@ -220,7 +220,7 @@ app.post('/bid', function(req, res) {
           text = text.replace(bidder, "");
           var strippedBidder = bidder.replace("@", "");
           console.log(strippedBidder);
-          bids[strippedBidder] = null;
+          bids[strippedBidder] = "";
         });
 
         redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", bids, function(err, obj) {
