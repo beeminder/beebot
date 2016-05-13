@@ -167,15 +167,15 @@ app.post('/roll', function(req, res) {
 });
 
 var statusText = function(obj) {
-  // hash of strings : hash
-  // e.g. { "U12345": { "name": "Andy", "bid": "foo" }, "U54321": { "name": "Bee", "bid": "bar"}}
+  // hash of username : bid
+  // e.g. { "apb": "foo", "bee": null}
   var haveBids = "Have bids from: {";
   var needBids = "awaiting bids from: {";
-  obj.bidders.forEach(function(bidder) {
-    if (bidder.bid) {
-      haveBids += bidder.name + ",";
+  Object.keys(obj.bidders).forEach(function(bidder) {
+    if (obj.bidders.bidder) {
+      haveBids += bidder + ",";
     } else {
-      needBids += bidder.name + ",";
+      needBids += bidder + ",";
     }
   });
   return "Taking bids for " + obj.purpose + ". " + haveBids + "}, " + needBids + "}";
@@ -183,8 +183,6 @@ var statusText = function(obj) {
 
 app.post('/bid', function(req, res) {
   var text = req.body.text;
-  res.send(req.body);
-  return;
   redis.hgetall("beebot.auctions." + req.body.channel_id, function(err, obj) {
     if (obj.length > 0) {
       // there is an active auction in this channel
@@ -210,19 +208,19 @@ app.post('/bid', function(req, res) {
         res.send("No current auction!");
       } else if (text.match(pattern)) {
         var bidders = {};
-        var purpose = "";
 
-
-        purpose.match(pattern).forEach(function(bidder) {
-          // add the bidder's name or user ID
+        text.match(pattern).forEach(function(bidder) {
+          text = text.replace(bidder, "");
+          var strippedBidder = bidder.replace("@", "");
+          bidders.strippedBidder = null;
         });
 
         var obj = {
-          purpose: purpose,
+          purpose: text.trim(),
           bidders: bidders
         };
         redis.hmset("beebot.auctions." + req.body.channel_id, obj, function(err, obj) {
-          res.send("Auction started." + statusText(obj));
+          res.send("Auction started. " + statusText(obj));
         });
 
       } else {
