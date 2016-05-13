@@ -215,9 +215,7 @@ app.post('/bid', function(req, res) {
           console.log("bidder: " + bidder);
           text = text.replace(bidder, "");
           var strippedBidder = bidder.replace("@", "");
-
-          console.log(bidders);
-          console.log(bidders[strippedBidder]);
+          console.log(strippedBidder);
           redis.hmset("beebot.auctions." + req.body.channel_id + ".bids", { strippedBidder : "" }, function(err, obj) {
             //nothing
           });
