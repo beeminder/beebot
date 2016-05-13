@@ -238,7 +238,7 @@ app.post('/bid', function(req, res) {
       } else if (text.match(/abort/i)) {
         res.send("No current auction!");
       } else if (text.match(pattern)) {
-        var bids = {};
+        var bids = { req.body.user_name : "" };
         text.match(pattern).forEach(function(bidder) {
           text = text.replace(bidder, "");
           var strippedBidder = bidder.replace("@", "");
