@@ -203,7 +203,7 @@ app.post('/bid', function(req, res) {
         res.send("You can't submit a bid with an @-mention. There is currently an active auction for " + obj.purpose + ". Use `/bid abort` to end the active auction or `/bid` to check status.")
       } else {
         redis.hset("beebot.auctions." + req.body.channel_id + ".bids", req.body.user_name, req.body.text, function(err, obj) {
-          redis.hgetall("beebot.auctions." + channelId + ".bids", function(err, obj) {
+          redis.hgetall("beebot.auctions." + req.body.channel_id + ".bids", function(err, obj) {
             var bidSummary = "";
             Object.keys(obj).forEach(function(bidder) {
               if (obj[bidder].length > 0) {
