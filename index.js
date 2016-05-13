@@ -212,7 +212,7 @@ app.post('/bid', function(req, res) {
                 res.send("Got your bid!");
               }
             });
-            res.send({ "text": bidSummary, "response_type": "in_channel");
+            res.send({ "text": bidSummary, "response_type": "in_channel" });
           });
         });
       }
