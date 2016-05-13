@@ -167,15 +167,15 @@ app.post('/roll', function(req, res) {
 });
 
 var statusText = function(obj) {
-  // hash of username : bid
+  // obj.bidders is a hash like { username : bid }
   // e.g. { "apb": "foo", "bee": null}
   var haveBids = "Have bids from: {";
   var needBids = "awaiting bids from: {";
   console.log(obj);
-  console.log(Object.keys(obj));
-  for (var bidder in obj.bidders) {
+  console.log(Object.keys(obj.bidders));
+  for (var bidder in Object.keys(obj.bidders)) {
     console.log("bidder:" + bidder);
-    if (obj.bidders.bidder) {
+    if (obj.bidders[bidder]) {
       haveBids += bidder + ",";
     } else if (obj.bidders.hasOwnProperty(bidder)) {
       needBids += bidder + ",";
