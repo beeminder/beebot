@@ -108,39 +108,40 @@ app.delete('/bot', function(req, res) {
 });
 
 app.post('/zeno', function(req, res) {
-  var rtm = bots.filter(function(b) {
-    return b.teamId === req.body.team_id; })[0];
-  if (rtm === null) { res.send("500"); return; }
+  var user = req.body.user_id;
+  var team = req.body.team_id;
+  var chan = req.body.channel;
+  var mesg = req.body.message;
+
+  var rtm = bots.filter(function(b) { return b.teamId === team })[0];
+  if (rtm === null) { res.send("500"); return }
   var WebClient = require('@slack/client').WebClient;
   var webClient = new WebClient(rtm._token);
 
-  if (req.body.channel) {
+  if (chan) {
     webClient.channels.list({}, function(error, response) {
-      if (!response.ok) { res.send("error!"); return; } //TODO: alert
+      if (!response.ok) { res.send("error!"); return } //TODO: alert
       for (var i = 0; i < response.channels.length; i++) {
         var channel = response.channels[i];
-        if (channel.name !== req.body.channel.replace('#', '')) { continue; }
-        rtm.send({
-          id: 1,
-          type: "message",
-          channel: channel.id,
-          text: req.body.message
-        });
+        if (channel.name !== chan.replace('#', '')) { continue }
+        rtm.send({ id      : 1,
+                   type    : "message",
+                   channel : channel.id,
+                   text    : mesg });
         res.send("ok");
-        return;
+        return
       }
       res.send("could not find a channel with the name " + req.body.channel);
     });
-    return;
+    return
   }
 
   // else default to a DM
-  var user = rtm.dataStore.getUserById(req.body.user_id);
-  var dm = rtm.dataStore.getDMByName(user.name);
-  rtm.sendMessage(req.body.message, dm.id);
+  var dm = rtm.dataStore.getDMByName(rtm.dataStore.getUserById(user).name);
+  rtm.sendMessage(mesg, dm.id);
   res.send("ok");
-  return;
-});
+  return
+})
 
 app.get('/debugger', function(req, res) { debugger; });
 
@@ -178,13 +179,15 @@ var attabid = function(s) {
   return users
 }
 
-// Returns string like "Got bids from {...}, waiting on {...}"
-// TODO: having it shout on its own again for now
-var bidStatus = function(res, chan) {
-  var status = "";
+// Shouts a string like "Got bids from {...}, waiting on {...}"
+// TODO: could pass in prefix/postfix strings for when we want to shout more 
+// than just the status.
+var bidStatusShout = function(res, chan) {
   var haveBids = "Got bids from {";  //TODO: gotten, needed
   var needBids = "waiting on {";
 
+  // NB: the function passed to hgetall is executed asynchronously so anything
+  // it does won't have been done yet after the hgetall call.
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
     var haveAnyBids = false;
     var haveAnyStragglers = false;
@@ -202,12 +205,8 @@ var bidStatus = function(res, chan) {
     haveBids += "}, ";
     if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
     needBids += "}";
-    // WTF1: I set status here and it's fine...
-    status += haveBids + needBids;
-    shout(res, status)
+    shout(res, haveBids + needBids)
   });
-  // WTF2: ...but status is back to the empty string here
-  return status
 }
 
 // Deletes all the bids
@@ -237,12 +236,13 @@ app.post('/bid', function(req, res) {
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
     if (obj) { //-------------------------------- active auction in this channel
       if (text === "") {
-        bidStatus(res, chan)
+        bidStatusShout(res, chan)
       } else if (text.match(/help/i)) {
-        shout(res, "Currently active auction:\n" + obj.purpose + "\n" + bidHelp)
+        shout(res, "Currently active auction:\n" // TODO: initiated by?
+          + obj.purpose + "\n" + bidHelp)
       } else if (text.match(/abort/i)) {
         bidEnd(chan);
-        //bidStatus(chan)
+        //bidStatusShout(chan)
         shout(res, "\nAborted.")
       } else if (!isEmpty(bids)) {
         res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
@@ -286,7 +286,7 @@ app.post('/bid', function(req, res) {
         var auction = {};
         auction.purpose = text.trim(); // includes the @-mentions; aka urtext
         redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
-          bidStatus(res, chan)
+          bidStatusShout(res, chan)
         })
       } else { // no @-mentions
         res.send("No current auction!\nYour attemped bid: " + text
