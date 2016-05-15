@@ -181,6 +181,13 @@ var attabid = function(s) {
   return users
 }
 
+// Returns a string representation of the hash of everyone's bids
+var bidSummary = function(bids) {
+  return Object.keys(bids).map(function(u) { 
+    return bids[u] ? "\t@" + u + ": " + bids[u] : ""
+  }).join("\n")
+}
+
 // Takes hash of users->bids, constructs a string like 
 // "Got bids from {...}, waiting on {...}"
 var bidStatus = function(bids) {
@@ -191,22 +198,17 @@ var bidStatus = function(bids) {
     + "}"
 }
 
-// Shouts a string like "Got bids from {...}, waiting on {...}"
-var bidStatusShout = function(res, chan, pre, post) {
-  pre  = typeof pre  !== 'undefined' ? pre  : ""
-  post = typeof post !== 'undefined' ? post : ""
-  // NB: the function passed to hgetall is executed asynchronously so anything
-  // it does won't have been done yet after the hgetall call.
+// Shouts template string, substituting $SUMMARY and $STATUS per above functions
+// The goofiness with passing in a template and substituting is that hgetall
+// is asynchronous so we can't use it to return a string that we can then use
+// to compose subsequent messages. Ie, when we actually fetch the bids that's
+// when we have to do whatever we're going to do with them, in this case shout
+// them.
+var bidAsyncShout = function(res, chan, template) {
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
-    shout(res, pre + bidStatus(obj) + post)
+    shout(res, template.replace("$SUMMARY", bidSummary(obj))
+                       .replace("$STATUS",  bidStatus(obj)))
   })
-}
-
-// Returns a string representation of the hash of everyone's bids
-var bidSummary = function(bids) {
-  return Object.keys(bids).map(function(u) { 
-    return bids[u] ? "\t@" + u + ": " + bids[u] : ""
-  }).join("\n")
 }
 
 // Returns whether any of the bids are missing
@@ -265,35 +267,20 @@ app.post('/bid', function(req, res) {
       if(!isEmpty(others)) { // has @-mentions
         res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
       } else if(text === "") { // no args
-        bidStatusShout(res, chan)
+        bidAsyncShout(res, chan, "$STATUS")
       } else if(text.match(/status/i)) {
-        bidStatusShout(res, chan, "Currently active auction initiated by @" 
-          + obj.initiator + " via:\n`" + obj.urtext + "`\n")
+        bidAsyncShout(res, chan, "Currently active auction initiated by @" 
+          + obj.initiator + " via:\n`" + obj.urtext + "`\n$STATUS")
       } else if(text.match(/abort/i)) {
-        bidStatusShout(res, chan, "", "\n*Aborted.* :panda_face:")
+        bidAsyncShout(res, chan, 
+          "*Aborted.* :panda_face: Partial results:\n$SUMMARY"
+          + "\n\nTEST: " + bidStatus(obj.bids))
         bidEnd(chan)
       } else if(text.match(/help/i)) {
         shout(res, bidHelp)
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
         procBid(res, chan, user, text)
-        //redis.hset("beebot.auctions." + chan + ".bids", user, text, 
-        //  function(err, obj) {
-        //    redis.hgetall("beebot.auctions." + chan + ".bids", 
-        //      function(err, obj) { // obj is now the hash from users to bids
-        //        if(stragglers(obj)) { 
-        //          res.send("Got your bid: " + text) 
-        //        } else {
-        //          bidEnd(chan)
-        //          shout(res, "*Bidding complete!*\n" 
-        //            + bidSummary(obj)
-        //            + "\n\n\t\t\t_Bernoulli[0.1] says "
-        //            + (bern(0.1) ? "PAY 10X! " 
-        //                 + ":money_with_wings: :moneybag: :money_mouth_face:_" :
-        //               "no payments!_"))
-        //        }
-        //      })
-        //  })
       }
     } else { //------------------------------- no active auction in this channel
       if(!isEmpty(others)) { // has @-mentions => start an auction!
@@ -304,7 +291,7 @@ app.post('/bid', function(req, res) {
         auction.urtext = "/bid " + text.trim()
         auction.initiator = user
         redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
-          bidStatusShout(res, chan, "Auction started! ")
+          bidAsyncShout(res, chan, "Auction started! ")
         }) }
       else if(text === "")           { res.send("No current auction!") }
       else if(text.match(/status/i)) { shout(res, "No current auction") }
