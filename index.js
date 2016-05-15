@@ -185,7 +185,9 @@ var attabid = function(s) {
 // TODO: pass in prefix/postfix strings for when we want to shout more than
 // just the status.
 //TODO: array.join(", ") ?
-var bidStatusShout = function(res, chan, pre = "", post = "") {
+var bidStatusShout = function(res, chan, pre, post) {
+  pre  = typeof pre  !== 'undefined' ? pre  : ""
+  post = typeof post !== 'undefined' ? post : ""
   var gotten = "Got bids from {"
   var needed = "waiting on {"
 
