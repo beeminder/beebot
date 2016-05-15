@@ -185,8 +185,8 @@ var attabid = function(s) {
 }
 
 // Shouts a string like "Got bids from {...}, waiting on {...}"
-// TODO: could pass in prefix/postfix strings for when we want to shout more 
-// than just the status.
+// TODO: pass in prefix/postfix strings for when we want to shout more than
+// just the status.
 //TODO: array.join(", ") ?
 var bidStatusShout = function(res, chan) {
   var gotten = "Got bids from {"
@@ -217,11 +217,12 @@ var bidEnd = function(chan) {
 }
 
 var bidHelp = "*Usage for the /bid command:*\n"
- + "`/bid stuff`  submit your bid (can resubmit till last person bids)\n"
  + "`/bid stuff with @-mentions`  start new auction with the mentioned people\n"
- + "`/bid`  with no args, check status of current auction (ie, who has bid)\n"
+ + "`/bid stuff`  submit your bid (can resubmit till last person bids)\n"
+ + "`/bid`  with no args, check who has bid\n"
+ + "`/bid status`  show how current auction was initiated and who has bid\n"
  + "`/bid abort`  abort the current auction\n"
- + "`/bid help`  show this (and/or see the urtext for current auction)"
+ + "`/bid help`  show this\n"
 
 app.post('/bid', function(req, res) {
   if (req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
@@ -236,8 +237,8 @@ app.post('/bid', function(req, res) {
       if(text === "") {
         bidStatusShout(res, chan)
       } else if(text.match(/help/i)) {
-        shout(res, "Currently active auction:\n" // TODO: initiated by ___ via:
-          + obj.urtext + "\n" + bidHelp)
+        shout(res, "Currently active auction initiated by @" + obj.initiator
+          + " via:\n`" + obj.urtext + "`\n" + bidHelp)
       } else if(text.match(/abort/i)) {
         bidEnd(chan)
         shout(res, "\nAborted.") // TODO: want latest bid status here too
@@ -246,29 +247,30 @@ app.post('/bid', function(req, res) {
       } else {
         redis.hset("beebot.auctions." + chan + ".bids", user, text, 
           function(err, obj) {
-          redis.hgetall("beebot.auctions." + chan + ".bids", 
-            function(err, obj) {
-            var bidSummary = "" // Could start with "Bidding complete!\n"
-            var missingBid = false
-            Object.keys(obj).forEach(function(bidder) {
-              if (obj[bidder].length > 0) {
-                bidSummary += bidder + ": " + obj[bidder] + "\n"
-              } else {
-                missingBid = true
-              }
+            redis.hgetall("beebot.auctions." + chan + ".bids", 
+              function(err, obj) {
+                var bidSummary = "" // Could start with "Bidding complete!\n"
+                var missingBid = false
+                Object.keys(obj).forEach(function(bidder) {
+                  if (obj[bidder].length > 0) {
+                    bidSummary += bidder + ": " + obj[bidder] + "\n"
+                  } else {
+                    missingBid = true
+                  }
+                })
+                if(missingBid) {
+                  res.send("Got your bid: " + text) //TODO or "updated your bid"
+                } else {
+                  bidEnd(chan)
+                  bidSummary += "\nBernoulli(0.1) says " 
+                    + (bern(0.1) ? 
+                       "PAY 10X! " 
+                         + ":money_with_wings: :moneybag: :money_mouth_face:" :
+                       "no payments!")
+                  shout(res, bidSummary)
+                }
             })
-            if(missingBid) {
-              res.send("Got your bid: " + text) // TODO: or "updated your bid"
-            } else {
-              bidEnd(chan)
-              bidSummary += "\nBernoulli(0.1) says " 
-                + (bern(0.1) ? 
-                   "PAY 10X! :money_with_wings: :moneybag: :money_mouth_face:" :
-                   "no payments!")
-              shout(res, bidSummary)
-            }
           })
-        })
       }
     } else { //------------------------------- no active auction in this channel
       if     (text === "")       { res.send("No current auction!\n" + bidHelp) }
@@ -281,7 +283,8 @@ app.post('/bid', function(req, res) {
                     function(err, obj) { })
 
         var auction = {}
-        auction.urtext = text.trim() // includes the @-mentions; aka urtext
+        auction.urtext = "/bid " + text.trim()
+        auction.initiator = user
         redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
           bidStatusShout(res, chan)
         })
