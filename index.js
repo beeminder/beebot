@@ -204,14 +204,9 @@ var bidStatusShout = function(res, chan, pre, post) {
 
 // Returns a string representation of the hash of everyone's bids
 var bidSummary = function(bids) {
-  //sumup = ""
-  //Object.keys(bids).forEach(function(u) {
-  //  if(bids[u].length > 0) { sumup += "@" + u + ": " + bids[u] + "\n" }
-  //})
   return Object.keys(bids).map(function(u) { 
-    return bids[u] ? "@" + u + ":" + bids[u] : ""
+    return bids[u] ? "@" + u + ": " + bids[u] : ""
   }).join("\n")
-  //return sumup
 }
 
 // Returns whether any of the bids are missing
@@ -268,8 +263,9 @@ app.post('/bid', function(req, res) {
                   res.send("Got your bid: " + text) 
                 } else {
                   bidEnd(chan)
-                  shout(res, "*Bidding complete!*\n" + bidSummary(obj)
-                    + "\n_Bernoulli(0.1) says "
+                  shout(res, "*Bidding complete!*\n" 
+                    + bidSummary(obj)
+                    + "\n\n\t\t\t_Bernoulli[0.1] says "
                     + (bern(0.1) ? "PAY 10X! " 
                          + ":money_with_wings: :moneybag: :money_mouth_face:_" :
                        "no payments!_"))
@@ -288,9 +284,10 @@ app.post('/bid', function(req, res) {
         redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
           bidStatusShout(res, chan, "Auction started! ")
         }) }
-      else if(text === "")          { res.send("No current auction!") }
-      else if(text.match(/help/i))  { res.send(bidHelp) }
-      else if(text.match(/abort/i)) { res.send("Error: No current auction!") }
+      else if(text === "")           { res.send("No current auction!") }
+      else if(text.match(/status/i)) { shout(res, "No current auction") }
+      else if(text.match(/abort/i))  { res.send("Error: No current auction!") }
+      else if(text.match(/help/i))   { res.send(bidHelp) }
       else { // if the text is anything else then it would be a normal bid
         res.send("Error: No current auction!\nYour attempted bid: " + text
           + "\nDo `/bid help` if confused.")
