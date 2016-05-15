@@ -234,8 +234,8 @@ app.post('/bid', function(req, res) {
       if(text === "") {
         bidStatusShout(res, chan)
       } else if(text.match(/help/i)) {
-        shout(res, "Currently active auction initiated by @" + "TODO:initiator"
-          + " via:\n" + obj.purpose + "\n" + bidHelp) //TODO: backticks
+        shout(res, "Currently active auction initiated by @" + obj.initiator
+          + " via:\n`" + obj.urtext + "`\n" + bidHelp)
       } else if(text.match(/abort/i)) {
         bidEnd(chan)
         shout(res, "Aborted.") // TODO: want latest bid status here too
@@ -277,8 +277,8 @@ app.post('/bid', function(req, res) {
         redis.hmset("beebot.auctions." + chan + ".bids", bids, 
                     function(err, obj) { })
         var auction = {}
-        auction.purpose = text.trim() //TODO urtext, prefix /bid
-        //auction.initiator = user
+        auction.urtext = "/bid " + text.trim()
+        auction.initiator = user
         redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
           bidStatusShout(res, chan)
         })
