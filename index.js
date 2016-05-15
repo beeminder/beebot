@@ -163,10 +163,11 @@ app.post('/roll', function(req, res) {
     res.send("Pssst, this is not an integer: " + text)
   } else if(n <= 0) {
     shout(res, "Rolling " + n + "-sided die... "
-      + (bern(0.1) ? ":poop:" : ":boom:")
+      + (Math.random() < 0.1 ? ":poop:" : ":boom:")
       + " (try again with a positive number of sides?)")
   } else {
-    shout(res, "Rolling " + n + "-sided die... it came up " + randint(n)
+    shout(res, "Rolling " + n + "-sided die... it came up "
+      + (Math.floor(Math.random()*n)+1))
   }
 })
 
