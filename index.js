@@ -268,15 +268,14 @@ app.post('/bid', function(req, res) {
         res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
       } else if(text === "") { // no args
         bidAsyncShout(res, chan, "$STATUS")
-      } else if(text.match(/status/i)) {
+      } else if(text === "status") {
         bidAsyncShout(res, chan, "Currently active auction initiated by @" 
           + obj.initiator + " via:\n`" + obj.urtext + "`\n$STATUS")
-      } else if(text.match(/abort/i)) {
+      } else if(text === "abort") {
         bidAsyncShout(res, chan, 
-          "*Aborted.* :panda_face: Partial results:\n$SUMMARY"
-          + "\n\nTEST: " + bidStatus(obj.bids))
+          "*Aborted.* :panda_face: Partial results:\n$SUMMARY")
         bidEnd(chan)
-      } else if(text.match(/help/i)) {
+      } else if(text === "help") {
         shout(res, bidHelp)
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
@@ -291,12 +290,12 @@ app.post('/bid', function(req, res) {
         auction.urtext = "/bid " + text.trim()
         auction.initiator = user
         redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
-          bidAsyncShout(res, chan, "Auction started! ")
+          bidAsyncShout(res, chan, "Auction started! $STATUS")
         }) }
-      else if(text === "")           { res.send("No current auction!") }
-      else if(text.match(/status/i)) { shout(res, "No current auction") }
-      else if(text.match(/abort/i))  { res.send("Error: No current auction!") }
-      else if(text.match(/help/i))   { res.send(bidHelp) }
+      else if(text === "")       { res.send("No current auction!") }
+      else if(text === "status") { shout(res, "No current auction") }
+      else if(text === "abort")  { res.send("Error: No current auction!") }
+      else if(text === "help")   { res.send(bidHelp) }
       else { // if the text is anything else then it would be a normal bid
         res.send("Error: No current auction!\nYour attempted bid: " + text
           + "\nDo `/bid help` if confused.")
