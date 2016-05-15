@@ -181,41 +181,41 @@ var attabid = function(s) {
   return users
 }
 
+// Takes hash of users->bids, constructs a string like 
+// "Got bids from {...}, waiting on {...}"
+var bidStatus = function(bids) {
+  return "Got bids from {" 
+    + Object.keys(bids).filter(function(x) { return  bids[x] }).join(", ")
+    + "}, waiting on {"
+    + Object.keys(bids).filter(function(x) { return !bids[x] }).join(", ")
+}
+
 // Shouts a string like "Got bids from {...}, waiting on {...}"
-//TODO: array.join(", ") ?
 var bidStatusShout = function(res, chan, pre, post) {
   pre  = typeof pre  !== 'undefined' ? pre  : ""
   post = typeof post !== 'undefined' ? post : ""
-  var gotten = "Got bids from {"
-  var needed = "waiting on {"
-
   // NB: the function passed to hgetall is executed asynchronously so anything
   // it does won't have been done yet after the hgetall call.
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
-    var anyBids  = false
-    var anyStrag = false // flag that becomes true if any stragglers
-    Object.keys(obj).forEach(function(bidder) {
-      if(obj[bidder].length > 0) { gotten += bidder + ", "; anyBids  = true }
-      else                       { needed += bidder + ", "; anyStrag = true }
-    })
-    if(anyBids)  { gotten = gotten.slice(0, -2) };   gotten += "}, "
-    if(anyStrag) { needed = needed.slice(0, -2) };   needed += "}"
-    shout(res, pre + gotten + needed + post)
+    shout(res, pre + bidStatus(obj) + post)
   })
 }
 
 // Returns a string representation of the hash of everyone's bids
 var bidSummary = function(bids) {
-  sumup = ""
-  Object.keys(bids).forEach(function(u) {
-    if(bids[u].length > 0) { sumup += "@" + u + ": " + bids[u] + "\n" }
-  })
-  return sumup
+  //sumup = ""
+  //Object.keys(bids).forEach(function(u) {
+  //  if(bids[u].length > 0) { sumup += "@" + u + ": " + bids[u] + "\n" }
+  //})
+  return Object.keys(bids).map(function(u) { 
+    return bids[u] ? "@" + u + ":" + bids[u] 
+  }).join("\n")
+  //return sumup
 }
 
 // Returns whether any of the bids are missing
 var stragglers = function(bids) {
-  return Object.keys(bids).some(function(x) { return bids[x].length === 0 })
+  return Object.keys(bids).some(function(x) { return !bids[x] })
 }
 
 // Deletes all the bids
@@ -233,7 +233,7 @@ var bidHelp = "*Usage for the /bid command:*\n"
  + "`/bid`  with no args, check who has bid\n"
  + "`/bid status`  show how current auction was initiated and who has bid\n"
  + "`/bid abort`  abort the current auction\n"
- + "`/bid help`  show this (or see expost.padm.us/sealedbids for gory details)"
+ + "`/bid help`  show this (see expost.padm.us/sealedbids for gory details)"
 
 app.post('/bid', function(req, res) {
   if(req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
@@ -253,7 +253,7 @@ app.post('/bid', function(req, res) {
         bidStatusShout(res, chan, "Currently active auction initiated by @" 
           + obj.initiator + " via:\n`" + obj.urtext + "`\n")
       } else if(text.match(/abort/i)) {
-        bidStatusShout(res, chan, "", "Aborted.")
+        bidStatusShout(res, chan, "", "\n*Aborted.* :panda_face:")
         bidEnd(chan)
       } else if(text.match(/help/i)) {
         shout(res, bidHelp)
