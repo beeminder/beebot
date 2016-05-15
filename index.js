@@ -228,7 +228,7 @@ app.post('/bid', function(req, res) {
   var chan = req.body.channel_id
   var user = req.body.user_name
   var text = req.body.text
-  var bids = attabid(text)
+  var others = attabid(text)
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
     if(obj) { //--------------------------------- active auction in this channel
       if(text === "") {
@@ -239,23 +239,23 @@ app.post('/bid', function(req, res) {
       } else if(text.match(/abort/i)) {
         bidEnd(chan)
         shout(res, "Aborted.") // TODO: want latest bid status here too
-      } else if(!isEmpty(bids)) {
+      } else if(!isEmpty(others)) {
         res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
       } else {
         redis.hset("beebot.auctions." + chan + ".bids", user, text, 
           function(err, obj) {
             redis.hgetall("beebot.auctions." + chan + ".bids", 
-              function(err, obj) {
-                var sumup = "*Bidding complete!\n"
-                var missingBid = false
+              function(err, obj) { // obj is now the hash from users to bids
+                var sumup = "*Bidding complete!*\n"
+                var stragglers = false
                 Object.keys(obj).forEach(function(bidder) {
                   if(obj[bidder].length > 0) {
-                    sumup += bidder + ": " + obj[bidder] + "\n"
+                    sumup += "@" + bidder + ": " + obj[bidder] + "\n"
                   } else {
-                    missingBid = true
+                    stragglers = true //TODO break out of the forEach
                   }
                 })
-                if(missingBid) {
+                if(stragglers) {
                   res.send("Got your bid: " + text) //TODO or "updated your bid"
                 } else {
                   bidEnd(chan)
@@ -272,10 +272,9 @@ app.post('/bid', function(req, res) {
       if     (text === "")          { res.send("No current auction!") }
       else if(text.match(/help/i))  { res.send(bidHelp) }
       else if(text.match(/abort/i)) { res.send("No current auction!") }
-      else if(!isEmpty(bids)) { // has @-mentions
-        bids[user] = ""
-        redis.hmset("beebot.auctions." + chan + ".bids", bids, 
-                    function(err, obj) { })
+      else if(!isEmpty(others)) { // has @-mentions
+        others[user] = ""
+        redis.hmset("beebot.auctions." + chan + ".bids", others)
         var auction = {}
         auction.urtext = "/bid " + text.trim()
         auction.initiator = user
