@@ -180,35 +180,54 @@ var attabid = function(s) {
 
 // Returns string like "Got bids from {...}, waiting on {...}"
 // TODO: having it shout on its own again for now
+//var bidStatus = function(res, chan) {
+//  var status = "";
+//  var haveBids = "Got bids from {";  //TODO: gotten, needed
+//  var needBids = "waiting on {";
+//
+//  redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
+//    var haveAnyBids = false;
+//    var haveAnyStragglers = false;
+//    Object.keys(obj).forEach(function(bidder) {
+//      if (obj[bidder].length > 0) {
+//        haveBids += bidder + ", ";
+//        haveAnyBids = true;
+//      } else {
+//        needBids += bidder + ", ";
+//        haveAnyStragglers = true;
+//      }
+//    });
+//    //TODO: array.join(", ") ?
+//    if (haveAnyBids)       { haveBids = haveBids.slice(0, -2); }
+//    haveBids += "}, ";
+//    if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
+//    needBids += "}";
+//    // WTF1: I set status here and it's fine...
+//    status += haveBids + needBids;
+//    shout(res, status)
+//  });
+//  // WTF2: ...but status is back to the empty string here
+//  return status
+//}
 var bidStatus = function(res, chan) {
-  var status = "";
-  var haveBids = "Got bids from {";  //TODO: gotten, needed
-  var needBids = "waiting on {";
+  var gotten = "Got bids from {"
+  var needed = "waiting on {"
 
+  // NB: the function passed to hgetall is executed asynchronously so anything
+  // it does won't have been done yet after the hgetall call.
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
-    var haveAnyBids = false;
-    var haveAnyStragglers = false;
+    var anyBids  = false
+    var anyStrag = false // flag that becomes true if any stragglers
     Object.keys(obj).forEach(function(bidder) {
-      if (obj[bidder].length > 0) {
-        haveBids += bidder + ", ";
-        haveAnyBids = true;
-      } else {
-        needBids += bidder + ", ";
-        haveAnyStragglers = true;
-      }
+      if (obj[bidder].length > 0) { gotten += bidder + ", "; anyBids  = true }
+      else                        { needed += bidder + ", "; anyStrag = true }
     });
-    //TODO: array.join(", ") ?
-    if (haveAnyBids)       { haveBids = haveBids.slice(0, -2); }
-    haveBids += "}, ";
-    if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
-    needBids += "}";
-    // WTF1: I set status here and it's fine...
-    status += haveBids + needBids;
-    shout(res, status)
-  });
-  // WTF2: ...but status is back to the empty string here
-  return status
+    if (anyBids)  { gotten = gotten.slice(0, -2) };   gotten += "}, "
+    if (anyStrag) { needed = needed.slice(0, -2) };   needed += "}"
+    shout(res, gotten + needed)
+  })
 }
+
 
 // Deletes all the bids
 var bidEnd = function(chan) {
