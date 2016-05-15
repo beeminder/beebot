@@ -182,8 +182,6 @@ var attabid = function(s) {
 }
 
 // Shouts a string like "Got bids from {...}, waiting on {...}"
-// TODO: pass in prefix/postfix strings for when we want to shout more than
-// just the status.
 //TODO: array.join(", ") ?
 var bidStatusShout = function(res, chan, pre, post) {
   pre  = typeof pre  !== 'undefined' ? pre  : ""
@@ -250,12 +248,12 @@ app.post('/bid', function(req, res) {
       if(!isEmpty(others)) { // has @-mentions
         res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
       } else if(text === "") { // no args
-        bidStatusShout(res, chan, "TESTPRE")
+        bidStatusShout(res, chan)
       } else if(text.match(/status/i)) {
-        shout(res, "Currently active auction initiated by @" + obj.initiator
-          + " via:\n`" + obj.urtext + "`\n" + "TODO: bids")
+        bidStatusShout(res, chan, "Currently active auction initiated by @" 
+          + obj.initiator + " via:\n`" + obj.urtext + "`\n")
       } else if(text.match(/abort/i)) {
-        shout(res, "Aborted.") // TODO: want latest bid status here too
+        bidStatusShout(res, chan, "", "Aborted.")
         bidEnd(chan)
       } else if(text.match(/help/i)) {
         shout(res, bidHelp)
@@ -279,10 +277,7 @@ app.post('/bid', function(req, res) {
           })
       }
     } else { //------------------------------- no active auction in this channel
-      if     (text === "")          { res.send("No current auction!") }
-      else if(text.match(/help/i))  { res.send(bidHelp) }
-      else if(text.match(/abort/i)) { res.send("No current auction!") }
-      else if(!isEmpty(others)) { // has @-mentions
+      if(!isEmpty(others)) { // has @-mentions => start an auction!
         others[user] = "" // "others" now includes iniating user too
         redis.hmset("beebot.auctions." + chan + ".bids", others,
           function(err, obj) { })
@@ -290,10 +285,13 @@ app.post('/bid', function(req, res) {
         auction.urtext = "/bid " + text.trim()
         auction.initiator = user
         redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
-          bidStatusShout(res, chan)
-        })
-      } else { // no @-mentions
-        res.send("No current auction!\nYour attempted bid: " + text
+          bidStatusShout(res, chan, "Auction started! ")
+        }) }
+      else if(text === "")          { res.send("No current auction!") }
+      else if(text.match(/help/i))  { res.send(bidHelp) }
+      else if(text.match(/abort/i)) { res.send("Error: No current auction!") }
+      else { // if the text is anything else then it would be a normal bid
+        res.send("Error: No current auction!\nYour attempted bid: " + text
           + "\nDo `/bid help` if confused.")
       }
     }
