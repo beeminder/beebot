@@ -199,11 +199,11 @@ var bidStatus = function(bids) {
 }
 
 // Shouts template string, substituting $SUMMARY and $STATUS per above functions
-// The goofiness with passing in a template and substituting is that hgetall
+// (The goofiness with passing in a template and substituting is that hgetall
 // is asynchronous so we can't use it to return a string that we can then use
 // to compose subsequent messages. Ie, when we actually fetch the bids that's
 // when we have to do whatever we're going to do with them, in this case shout
-// them.
+// them.)
 var bidAsyncShout = function(res, chan, template) {
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
     shout(res, template.replace("$SUMMARY", bidSummary(obj))
@@ -233,6 +233,12 @@ var bidHelp = "*Usage for the /bid command:*\n"
  + "`/bid abort`  abort the current auction\n"
  + "`/bid help`  show this (see expost.padm.us/sealedbids for gory details)"
 
+var bidPay = function() {
+  var parade = ":money_with_wings: :moneybag: :money_mouth_face:"
+  return "Bernoulli[0.1] says " 
+    + (bern(0.1) ? "PAY 10X! " + parade : "no payments!")
+}
+
 // Add text as user's bid, shout the results if no remaining stragglers
 var procBid = function(res, chan, user, text) {
   redis.hset("beebot.auctions." + chan + ".bids", user, text, 
@@ -243,12 +249,8 @@ var procBid = function(res, chan, user, text) {
             res.send("Got your bid: " + text) 
           } else {
             bidEnd(chan)
-            shout(res, "*Bidding complete!*\n" 
-              + bidSummary(obj)
-              + "\n\n_Bernoulli[0.1] says "
-              + (bern(0.1) ? "PAY 10X! " 
-                   + ":money_with_wings: :moneybag: :money_mouth_face:_" :
-                 "no payments!_"))
+            shout(res, "*Bidding complete!*\n" + bidSummary(obj) + 
+              "\n\n_" + bidPay() + "_")
           }
         })
     })
@@ -273,7 +275,8 @@ app.post('/bid', function(req, res) {
           + obj.initiator + " via:\n`" + obj.urtext + "`\n$STATUS")
       } else if(text === "abort") {
         bidAsyncShout(res, chan, 
-          "*Aborted.* :panda_face: Partial results:\n$SUMMARY")
+          "*Aborted.* :panda_face: Partial results:\n$SUMMARY" 
+          + "\n\n_" + bidPay() + "_")
         bidEnd(chan)
       } else if(text === "help") {
         shout(res, bidHelp)
