@@ -137,7 +137,7 @@ app.post('/zeno', function(req, res) {
   rtm.sendMessage(req.body.message, dm.id);
   res.send("ok");
   return;
-})
+});
 
 app.get('/debugger', function(req, res) { debugger; });
 
@@ -234,7 +234,7 @@ app.post('/bid', function(req, res) {
         bidStatusShout(res, chan)
       } else if(text.match(/help/i)) {
         shout(res, "Currently active auction initiated by @" + "TODO:initiator"
-          + " via:\n`" + obj.purpose + "`\n" + bidHelp)
+          + " via:\n" + obj.purpose + "\n" + bidHelp) //TODO: backticks
       } else if(text.match(/abort/i)) {
         bidEnd(chan)
         shout(res, "Aborted.") // TODO: want latest bid status here too
@@ -276,7 +276,7 @@ app.post('/bid', function(req, res) {
         redis.hmset("beebot.auctions." + chan + ".bids", bids, 
                     function(err, obj) { })
         var auction = {}
-        auction.purpose = "/bid " + text.trim()
+        auction.purpose = text.trim() //TODO urtext, prefix /bid
         //auction.initiator = user
         redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
           bidStatusShout(res, chan)
