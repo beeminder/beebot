@@ -188,6 +188,7 @@ var bidStatus = function(bids) {
     + Object.keys(bids).filter(function(x) { return  bids[x] }).join(", ")
     + "}, waiting on {"
     + Object.keys(bids).filter(function(x) { return !bids[x] }).join(", ")
+    + "}"
 }
 
 // Shouts a string like "Got bids from {...}, waiting on {...}"
@@ -208,7 +209,7 @@ var bidSummary = function(bids) {
   //  if(bids[u].length > 0) { sumup += "@" + u + ": " + bids[u] + "\n" }
   //})
   return Object.keys(bids).map(function(u) { 
-    return bids[u] ? "@" + u + ":" + bids[u] 
+    return bids[u] ? "@" + u + ":" + bids[u] : ""
   }).join("\n")
   //return sumup
 }
