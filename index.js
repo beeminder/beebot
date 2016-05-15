@@ -274,7 +274,8 @@ app.post('/bid', function(req, res) {
       else if(text.match(/abort/i)) { res.send("No current auction!") }
       else if(!isEmpty(others)) { // has @-mentions
         others[user] = ""
-        redis.hmset("beebot.auctions." + chan + ".bids", others)
+        redis.hmset("beebot.auctions." + chan + ".bids", others,
+          function(err, obj) { })
         var auction = {}
         auction.urtext = "/bid " + text.trim()
         auction.initiator = user
