@@ -170,10 +170,10 @@ var isEmpty = function(obj) { return Object.keys(obj).length === 0 }
 
 // Returns a hash of usernames (without the @'s) who are @-mentioned in s
 var attabid = function(s) {
-  var pattern = /\B@[a-z0-9_-]+/gi; // regex for @-mentions, HT StackOverflow
-  var users = {};
+  var pattern = /\B@[a-z0-9_-]+/gi // regex for @-mentions, HT StackOverflow
+  var users = {}
   if (s.match(pattern)) {
-    s.match(pattern).forEach(function(u) { users[u.replace("@", "")] = ""; })
+    s.match(pattern).forEach(function(u) { users[u.replace("@", "")] = "" })
   }
   return users
 }
