@@ -204,6 +204,20 @@ var bidStatusShout = function(res, chan) {
   })
 }
 
+// Returns a string representation of the hash of everyone's bids
+var bidSummary = function(bids) {
+  sumup = ""
+  Object.keys(bids).forEach(function(u) {
+    if(bids[u].length > 0) { sumup += "@" + u + ": " + bids[u] + "\n" }
+  })
+  return sumup
+}
+
+// Returns whether any of the bids are missing
+var stragglers = function(bids) {
+  return Object.keys(bids).some(function(x) { return bids[x].length === 0 })
+}
+
 // Deletes all the bids
 var bidEnd = function(chan) {
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
@@ -246,24 +260,15 @@ app.post('/bid', function(req, res) {
           function(err, obj) {
             redis.hgetall("beebot.auctions." + chan + ".bids", 
               function(err, obj) { // obj is now the hash from users to bids
-                var sumup = "*Bidding complete!*\n"
-                var stragglers = false
-                Object.keys(obj).forEach(function(bidder) {
-                  if(obj[bidder].length > 0) {
-                    sumup += "@" + bidder + ": " + obj[bidder] + "\n"
-                  } else {
-                    stragglers = true //TODO break out of the forEach
-                  }
-                })
-                if(stragglers) {
-                  res.send("Got your bid: " + text) //TODO or "updated your bid"
+                if(stragglers(obj)) { 
+                  res.send("Got your bid: " + text) 
                 } else {
                   bidEnd(chan)
-                  sumup += "\nBernoulli(0.1) says " 
+                  shout(res, "*Bidding complete!*\n" + bidSummary(obj)
+                    + "\nBernoulli(0.1) says "
                     + (bern(0.1) ? "PAY 10X! " 
-                         + ":money_with_wings: :moneybag: :money_mouth_face:" :
-                       "no payments!")
-                  shout(res, sumup)
+                         + ":money_with_wings: :moneybag: :money_mouth_face:_" :
+                       "no payments!_"))
                 }
               })
           })
@@ -283,7 +288,7 @@ app.post('/bid', function(req, res) {
           bidStatusShout(res, chan)
         })
       } else { // no @-mentions
-        res.send("No current auction!\nYour attemped bid: " + text
+        res.send("No current auction!\nYour attempted bid: " + text
           + "\nDo `/bid help` if confused.")
       }
     }
