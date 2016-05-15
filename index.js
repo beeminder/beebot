@@ -222,7 +222,7 @@ var bidHelp = "*Usage for the /bid command:*\n"
  + "`/bid`  with no args, check who has bid\n"
  + "`/bid status`  show how current auction was initiated and who has bid\n"
  + "`/bid abort`  abort the current auction\n"
- + "`/bid help`  show this\n"
+ + "`/bid help`  show this"
 
 app.post('/bid', function(req, res) {
   if (req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
@@ -241,7 +241,7 @@ app.post('/bid', function(req, res) {
           + " via:\n`" + obj.urtext + "`\n" + bidHelp)
       } else if(text.match(/abort/i)) {
         bidEnd(chan)
-        shout(res, "\nAborted.") // TODO: want latest bid status here too
+        shout(res, "Aborted.") // TODO: want latest bid status here too
       } else if(!isEmpty(bids)) {
         res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
       } else {
@@ -252,7 +252,7 @@ app.post('/bid', function(req, res) {
                 var bidSummary = "" // Could start with "Bidding complete!\n"
                 var missingBid = false
                 Object.keys(obj).forEach(function(bidder) {
-                  if (obj[bidder].length > 0) {
+                  if(obj[bidder].length > 0) {
                     bidSummary += bidder + ": " + obj[bidder] + "\n"
                   } else {
                     missingBid = true
@@ -263,25 +263,22 @@ app.post('/bid', function(req, res) {
                 } else {
                   bidEnd(chan)
                   bidSummary += "\nBernoulli(0.1) says " 
-                    + (bern(0.1) ? 
-                       "PAY 10X! " 
+                    + (bern(0.1) ? "PAY 10X! " 
                          + ":money_with_wings: :moneybag: :money_mouth_face:" :
                        "no payments!")
                   shout(res, bidSummary)
                 }
-            })
+              })
           })
       }
     } else { //------------------------------- no active auction in this channel
-      if     (text === "")       { res.send("No current auction!\n" + bidHelp) }
+      if     (text === "")          { res.send("No current auction!") }
       else if(text.match(/help/i))  { res.send(bidHelp) }
       else if(text.match(/abort/i)) { res.send("No current auction!") }
       else if(!isEmpty(bids)) { // has @-mentions
         bids[user] = "";
-
         redis.hmset("beebot.auctions." + chan + ".bids", bids, 
                     function(err, obj) { })
-
         var auction = {}
         auction.urtext = "/bid " + text.trim()
         //auction.initiator = user
