@@ -185,7 +185,7 @@ var attabid = function(s) {
 // TODO: pass in prefix/postfix strings for when we want to shout more than
 // just the status.
 //TODO: array.join(", ") ?
-var bidStatusShout = function(res, chan) {
+var bidStatusShout = function(res, chan, pre = "", post = "") {
   var gotten = "Got bids from {"
   var needed = "waiting on {"
 
@@ -200,7 +200,7 @@ var bidStatusShout = function(res, chan) {
     })
     if(anyBids)  { gotten = gotten.slice(0, -2) };   gotten += "}, "
     if(anyStrag) { needed = needed.slice(0, -2) };   needed += "}"
-    shout(res, gotten + needed)
+    shout(res, pre + gotten + needed + post)
   })
 }
 
@@ -248,7 +248,7 @@ app.post('/bid', function(req, res) {
       if(!isEmpty(others)) { // has @-mentions
         res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
       } else if(text === "") { // no args
-        bidStatusShout(res, chan)
+        bidStatusShout(res, chan, "TESTPRE")
       } else if(text.match(/status/i)) {
         shout(res, "Currently active auction initiated by @" + obj.initiator
           + " via:\n`" + obj.urtext + "`\n" + "TODO: bids")
