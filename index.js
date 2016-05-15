@@ -114,30 +114,31 @@ app.post('/zeno', function(req, res) {
   var mesg = req.body.message;
 
   var rtm = bots.filter(function(b) { return b.teamId === team })[0];
-  if (rtm === null) { res.send("500"); return }
+  if (rtm === null) { res.send("500"); return; }
   var WebClient = require('@slack/client').WebClient;
   var webClient = new WebClient(rtm._token);
 
   if (chan) {
     webClient.channels.list({}, function(error, response) {
-      if (!response.ok) { res.send("error!"); return } //TODO: alert
+      if (!response.ok) { res.send("error!"); return; } //TODO: alert
       for (var i = 0; i < response.channels.length; i++) {
         var channel = response.channels[i];
-        if (channel.name !== chan.replace('#', '')) { continue }
+        if (channel.name !== chan.replace('#', '')) { continue; }
         rtm.send({ id      : 1,
                    type    : "message",
                    channel : channel.id,
                    text    : mesg });
         res.send("ok");
-        return
+        return;
       }
       res.send("could not find a channel with the name " + req.body.channel);
     });
-    return
+    return;
   }
 
   // else default to a DM
-  var dm = rtm.dataStore.getDMByName(rtm.dataStore.getUserById(user).name);
+  var u = rtm.dataStore.getUserById(user);
+  var dm = rtm.dataStore.getDMByName(u.name);
   rtm.sendMessage(mesg, dm.id);
   res.send("ok");
   return
