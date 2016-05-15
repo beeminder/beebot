@@ -205,7 +205,7 @@ var bidStatusShout = function(res, chan, pre, post) {
 // Returns a string representation of the hash of everyone's bids
 var bidSummary = function(bids) {
   return Object.keys(bids).map(function(u) { 
-    return bids[u] ? "@" + u + ": " + bids[u] : ""
+    return bids[u] ? "\t@" + u + ": " + bids[u] : ""
   }).join("\n")
 }
 
@@ -231,6 +231,27 @@ var bidHelp = "*Usage for the /bid command:*\n"
  + "`/bid abort`  abort the current auction\n"
  + "`/bid help`  show this (see expost.padm.us/sealedbids for gory details)"
 
+// Add text as user's bid, shout the results if no remaining stragglers
+var procBid = function(res, chan, user, text) {
+  redis.hset("beebot.auctions." + chan + ".bids", user, text, 
+    function(err, obj) {
+      redis.hgetall("beebot.auctions." + chan + ".bids", 
+        function(err, obj) { // obj is now the hash from users to bids
+          if(stragglers(obj)) { 
+            res.send("Got your bid: " + text) 
+          } else {
+            bidEnd(chan)
+            shout(res, "*Bidding complete!*\n" 
+              + bidSummary(obj)
+              + "\n\n_Bernoulli[0.1] says "
+              + (bern(0.1) ? "PAY 10X! " 
+                   + ":money_with_wings: :moneybag: :money_mouth_face:_" :
+                 "no payments!_"))
+          }
+        })
+    })
+}
+
 app.post('/bid', function(req, res) {
   if(req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
     res.send("This request didn't come from Slack!")
@@ -255,23 +276,24 @@ app.post('/bid', function(req, res) {
         shout(res, bidHelp)
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
-        redis.hset("beebot.auctions." + chan + ".bids", user, text, 
-          function(err, obj) {
-            redis.hgetall("beebot.auctions." + chan + ".bids", 
-              function(err, obj) { // obj is now the hash from users to bids
-                if(stragglers(obj)) { 
-                  res.send("Got your bid: " + text) 
-                } else {
-                  bidEnd(chan)
-                  shout(res, "*Bidding complete!*\n" 
-                    + bidSummary(obj)
-                    + "\n\n\t\t\t_Bernoulli[0.1] says "
-                    + (bern(0.1) ? "PAY 10X! " 
-                         + ":money_with_wings: :moneybag: :money_mouth_face:_" :
-                       "no payments!_"))
-                }
-              })
-          })
+        procBid(res, chan, user, text)
+        //redis.hset("beebot.auctions." + chan + ".bids", user, text, 
+        //  function(err, obj) {
+        //    redis.hgetall("beebot.auctions." + chan + ".bids", 
+        //      function(err, obj) { // obj is now the hash from users to bids
+        //        if(stragglers(obj)) { 
+        //          res.send("Got your bid: " + text) 
+        //        } else {
+        //          bidEnd(chan)
+        //          shout(res, "*Bidding complete!*\n" 
+        //            + bidSummary(obj)
+        //            + "\n\n\t\t\t_Bernoulli[0.1] says "
+        //            + (bern(0.1) ? "PAY 10X! " 
+        //                 + ":money_with_wings: :moneybag: :money_mouth_face:_" :
+        //               "no payments!_"))
+        //        }
+        //      })
+        //  })
       }
     } else { //------------------------------- no active auction in this channel
       if(!isEmpty(others)) { // has @-mentions => start an auction!
