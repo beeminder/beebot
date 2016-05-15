@@ -108,26 +108,21 @@ app.delete('/bot', function(req, res) {
 });
 
 app.post('/zeno', function(req, res) {
-  var user = req.body.user_id;
-  var team = req.body.team_id;
-  var chan = req.body.channel;
-  var mesg = req.body.message;
-
-  var rtm = bots.filter(function(b) { return b.teamId === team })[0];
+  var rtm = bots.filter(function(b) { return b.teamId === req.body.team_id })[0]
   if (rtm === null) { res.send("500"); return; }
   var WebClient = require('@slack/client').WebClient;
   var webClient = new WebClient(rtm._token);
 
-  if (chan) {
+  if (req.body.channel) {
     webClient.channels.list({}, function(error, response) {
       if (!response.ok) { res.send("error!"); return; } //TODO: alert
       for (var i = 0; i < response.channels.length; i++) {
         var channel = response.channels[i];
-        if (channel.name !== chan.replace('#', '')) { continue; }
+        if (channel.name !== req.body.channel.replace('#', '')) { continue; }
         rtm.send({ id      : 1,
                    type    : "message",
                    channel : channel.id,
-                   text    : mesg });
+                   text    : req.body.message });
         res.send("ok");
         return;
       }
@@ -137,11 +132,11 @@ app.post('/zeno', function(req, res) {
   }
 
   // else default to a DM
-  var u = rtm.dataStore.getUserById(user);
-  var dm = rtm.dataStore.getDMByName(u.name);
-  rtm.sendMessage(mesg, dm.id);
+  var user = rtm.dataStore.getUserById(req.body.user_id);
+  var dm = rtm.dataStore.getDMByName(user.name);
+  rtm.sendMessage(req.body.message, dm.id);
   res.send("ok");
-  return
+  return;
 })
 
 app.get('/debugger', function(req, res) { debugger; });
