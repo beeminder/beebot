@@ -150,20 +150,25 @@ var shout = function(res, txt) {
              "text"         : txt })
 }
 
+// Bernoulli trial with probability p
+var bern = function(p) { return (Math.random() < p) }
+
+// Random integer from 1 to n inclusive
+var randint = function(n) { return Math.floor(Math.random()*n)+1 }
+
 app.post('/roll', function(req, res) {
-  var text = req.body.text;
-  var n = parseInt(text);
+  var text = req.body.text
+  var n = parseInt(text)
   if(isNaN(n)) {
     res.send("Pssst, this is not an integer: " + text)
   } else if(n <= 0) {
     shout(res, "Rolling " + n + "-sided die... "
-      + (Math.random() < 0.1 ? ":poop:" : ":boom:")
+      + (bern(0.1) ? ":poop:" : ":boom:")
       + " (try again with a positive number of sides?)")
   } else {
-    shout(res, "Rolling " + n + "-sided die... it came up "
-      + (Math.floor(Math.random()*n)+1))
+    shout(res, "Rolling " + n + "-sided die... it came up " + randint(n)
   }
-});
+})
 
 // StackOverflow says this is how you check if a hash is empty in ES5
 var isEmpty = function(obj) { return Object.keys(obj).length === 0 }
