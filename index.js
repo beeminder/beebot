@@ -237,7 +237,7 @@ app.post('/bid', function(req, res) {
       if(text === "") {
         bidStatusShout(res, chan)
       } else if(text.match(/help/i)) {
-        shout(res, "Currently active auction initiated by @" + obj.initiator
+        shout(res, "Currently active auction initiated by @" + "TODO:initiator"
           + " via:\n`" + obj.urtext + "`\n" + bidHelp)
       } else if(text.match(/abort/i)) {
         bidEnd(chan)
@@ -284,7 +284,7 @@ app.post('/bid', function(req, res) {
 
         var auction = {}
         auction.urtext = "/bid " + text.trim()
-        auction.initiator = user
+        //auction.initiator = user
         redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
           bidStatusShout(res, chan)
         })
