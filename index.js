@@ -233,7 +233,7 @@ var bidHelp = "*Usage for the /bid command:*\n"
  + "`/bid`  with no args, check who has bid\n"
  + "`/bid status`  show how current auction was initiated and who has bid\n"
  + "`/bid abort`  abort the current auction\n"
- + "`/bid help`  show this"
+ + "`/bid help`  show this (or see expost.padm.us/sealedbids for gory details)"
 
 app.post('/bid', function(req, res) {
   if(req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
@@ -245,17 +245,20 @@ app.post('/bid', function(req, res) {
   var others = attabid(text)
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
     if(obj) { //--------------------------------- active auction in this channel
-      if(text === "") {
-        bidStatusShout(res, chan)
-      } else if(text.match(/help/i)) {
-        shout(res, "Currently active auction initiated by @" + obj.initiator
-          + " via:\n`" + obj.urtext + "`\n" + bidHelp)
-      } else if(text.match(/abort/i)) {
-        bidEnd(chan)
-        shout(res, "Aborted.") // TODO: want latest bid status here too
-      } else if(!isEmpty(others)) {
+      if(!isEmpty(others)) { // has @-mentions
         res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
-      } else {
+      } else if(text === "") { // no args
+        bidStatusShout(res, chan)
+      } else if(text.match(/status/i)) {
+        shout(res, "Currently active auction initiated by @" + obj.initiator
+          + " via:\n`" + obj.urtext + "`\n" + "TODO: bids")
+      } else if(text.match(/abort/i)) {
+        shout(res, "Aborted.") // TODO: want latest bid status here too
+        bidEnd(chan)
+      } else if(text.match(/help/i)) {
+        shout(res, bidHelp)
+      } else {  // if the text is anything else then it's a normal bid
+        // could check if user has an old bid so we can say "Updated your bid"
         redis.hset("beebot.auctions." + chan + ".bids", user, text, 
           function(err, obj) {
             redis.hgetall("beebot.auctions." + chan + ".bids", 
@@ -265,7 +268,7 @@ app.post('/bid', function(req, res) {
                 } else {
                   bidEnd(chan)
                   shout(res, "*Bidding complete!*\n" + bidSummary(obj)
-                    + "\nBernoulli(0.1) says "
+                    + "\n_Bernoulli(0.1) says "
                     + (bern(0.1) ? "PAY 10X! " 
                          + ":money_with_wings: :moneybag: :money_mouth_face:_" :
                        "no payments!_"))
@@ -278,7 +281,7 @@ app.post('/bid', function(req, res) {
       else if(text.match(/help/i))  { res.send(bidHelp) }
       else if(text.match(/abort/i)) { res.send("No current auction!") }
       else if(!isEmpty(others)) { // has @-mentions
-        others[user] = ""
+        others[user] = "" // "others" now includes iniating user too
         redis.hmset("beebot.auctions." + chan + ".bids", others,
           function(err, obj) { })
         var auction = {}
