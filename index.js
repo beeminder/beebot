@@ -246,11 +246,11 @@ app.post('/bid', function(req, res) {
           function(err, obj) {
             redis.hgetall("beebot.auctions." + chan + ".bids", 
               function(err, obj) {
-                var bidSummary = "" // Could start with "Bidding complete!\n"
+                var sumup = "*Bidding complete!\n"
                 var missingBid = false
                 Object.keys(obj).forEach(function(bidder) {
                   if(obj[bidder].length > 0) {
-                    bidSummary += bidder + ": " + obj[bidder] + "\n"
+                    sumup += bidder + ": " + obj[bidder] + "\n"
                   } else {
                     missingBid = true
                   }
@@ -259,11 +259,11 @@ app.post('/bid', function(req, res) {
                   res.send("Got your bid: " + text) //TODO or "updated your bid"
                 } else {
                   bidEnd(chan)
-                  bidSummary += "\nBernoulli(0.1) says " 
+                  sumup += "\nBernoulli(0.1) says " 
                     + (bern(0.1) ? "PAY 10X! " 
                          + ":money_with_wings: :moneybag: :money_mouth_face:" :
                        "no payments!")
-                  shout(res, bidSummary)
+                  shout(res, sumup)
                 }
               })
           })
