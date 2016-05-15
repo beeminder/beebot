@@ -182,48 +182,41 @@ var attabid = function(s) {
 // Shouts a string like "Got bids from {...}, waiting on {...}"
 // TODO: could pass in prefix/postfix strings for when we want to shout more 
 // than just the status.
+//TODO: array.join(", ") ?
 var bidStatusShout = function(res, chan) {
-  var haveBids = "Got bids from {";  //TODO: gotten, needed
-  var needBids = "waiting on {";
+  var gotten = "Got bids from {";
+  var needed = "waiting on {";
 
   // NB: the function passed to hgetall is executed asynchronously so anything
   // it does won't have been done yet after the hgetall call.
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
-    var haveAnyBids = false;
-    var haveAnyStragglers = false;
+    var anyBids  = false;
+    var anyStrag = false; // flag that becomes true if any stragglers
     Object.keys(obj).forEach(function(bidder) {
-      if (obj[bidder].length > 0) {
-        haveBids += bidder + ", ";
-        haveAnyBids = true;
-      } else {
-        needBids += bidder + ", ";
-        haveAnyStragglers = true;
-      }
+      if (obj[bidder].length > 0) { gotten += bidder + ", "; anyBids  = true }
+      else                        { needed += bidder + ", "; anyStrag = true }
     });
-    //TODO: array.join(", ") ?
-    if (haveAnyBids)       { haveBids = haveBids.slice(0, -2); }
-    haveBids += "}, ";
-    if (haveAnyStragglers) { needBids = needBids.slice(0, -2); }
-    needBids += "}";
-    shout(res, haveBids + needBids)
-  });
+    if (anyBids)  { gotten = gotten.slice(0, -2) };   gotten += "}, ";
+    if (anyStrag) { needed = needed.slice(0, -2) };   needed += "}";
+    shout(res, gotten + needed)
+  })
 }
 
 // Deletes all the bids
 var bidEnd = function(chan) {
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
     redis.del("beebot.auctions." + chan, function(err, obj) {
-      redis.del("beebot.auctions." + chan + ".bids", 
-                function(err, obj) { /* nothing */ })
+      redis.del("beebot.auctions." + chan + ".bids", function(err, obj) { })
     })
   })
 }
 
 var bidHelp = "*Usage for the /bid command:*\n"
-  + "`/bid help`  show this (and/or see the urtext for current auction)\n"
-  + "`/bid`  with no args, check status of current auction (ie, who's bid)\n"
-  + "`/bid stuff`  submit your bid (can resubmit till last person bids)\n"
-  + "`/bid stuff with @-mentions`  start new auction with the mentioned people"
+ + "`/bid stuff`  submit your bid (can resubmit till last person bids)\n"
+ + "`/bid stuff with @-mentions`  start new auction with the mentioned people\n"
+ + "`/bid`  with no args, check status of current auction (ie, who has bid)\n"
+ + "`/bid abort`  abort the current auction\n"
+ + "`/bid help`  show this (and/or see the urtext for current auction)"
 
 app.post('/bid', function(req, res) {
   if (req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
@@ -238,12 +231,11 @@ app.post('/bid', function(req, res) {
       if (text === "") {
         bidStatusShout(res, chan)
       } else if (text.match(/help/i)) {
-        shout(res, "Currently active auction:\n" // TODO: initiated by?
+        shout(res, "Currently active auction:\n" // TODO: initiated by ___ via:
           + obj.purpose + "\n" + bidHelp)
       } else if (text.match(/abort/i)) {
         bidEnd(chan);
-        //bidStatusShout(chan)
-        shout(res, "\nAborted.")
+        shout(res, "\nAborted.") // TODO: want latest bid status here too
       } else if (!isEmpty(bids)) {
         res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
       } else {
