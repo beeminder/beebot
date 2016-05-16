@@ -174,7 +174,7 @@ var isEmpty = function(obj) { return Object.keys(obj).length === 0 }
 var bidParse = function(txt) {
   var pattern = /\B@[a-z0-9_-]+/gi // regex for @-mentions, HT StackOverflow
   var users = {}
-  if(s.match(pattern)) { // RegExp.exec() might avoid doing match in 2 places
+  if(txt.match(pattern)) { // RegExp.exec() might avoid doing match in 2 places
     txt.match(pattern).forEach(function(u) { users[u.replace("@", "")] = "" })
   }
   return users
