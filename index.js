@@ -144,8 +144,7 @@ app.get('/debugger', function(req, res) { debugger; });
 
 // Say the string txt to everyone in the channel
 var shout = function(res, txt) {
-  res.send({ "response_type": "in_channel",
-             "text"         : txt })
+  res.send({ "response_type": "in_channel", "text": txt })
 }
 
 // Bernoulli trial with probability p
@@ -171,12 +170,12 @@ app.post('/roll', function(req, res) {
 // StackOverflow says this is how you check if a hash is empty in ES5
 var isEmpty = function(obj) { return Object.keys(obj).length === 0 }
 
-// Returns a hash of usernames (without the @'s) who are @-mentioned in s
-var attabid = function(s) {
+// Returns a hash of usernames (without the @'s) who are @-mentioned in txt
+var bidParse = function(txt) {
   var pattern = /\B@[a-z0-9_-]+/gi // regex for @-mentions, HT StackOverflow
   var users = {}
   if(s.match(pattern)) { // RegExp.exec() might avoid doing match in 2 places
-    s.match(pattern).forEach(function(u) { users[u.replace("@", "")] = "" })
+    txt.match(pattern).forEach(function(u) { users[u.replace("@", "")] = "" })
   }
   return users
 }
@@ -214,17 +213,42 @@ var bidAsyncShout = function(res, chan, template) {
 }
 
 // Returns whether any of the bids are missing
-var stragglers = function(bids) {
+var bidMissing = function(bids) {
   return Object.keys(bids).some(function(x) { return !bids[x] })
 }
 
 // Deletes all the bids
-var bidEnd = function(chan) {
+var bidReset = function(chan) {
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
     redis.del("beebot.auctions." + chan, function(err, obj) {
       redis.del("beebot.auctions." + chan + ".bids", function(err, obj) { })
     })
   })
+}
+
+// Just returns a string about whether to 10X the payments. Note that the /bid
+// command doesn't actually parse out numbers or deal with payments in any way.
+var bidPay = function() {
+  var tenx = bern(0.1)
+  var parade = ":money_with_wings: :moneybag: :money_mouth_face:"
+  return "Bernoulli[.1] says " + (tenx ? "PAY 10X! " + parade : "no payments!")
+}
+
+// Add text as user's bid, shout the results if user is the last one to bid
+var bidProc = function(res, chan, user, text) {
+  redis.hset("beebot.auctions." + chan + ".bids", user, text, 
+    function(err, obj) {
+      redis.hgetall("beebot.auctions." + chan + ".bids", 
+        function(err, obj) { // obj is now the hash from users to bids
+          if(bidMissing(obj)) { 
+            res.send("Got your bid: " + text) 
+          } else {
+            bidReset(chan)
+            shout(res, "*Bidding complete!*\n" + bidSummary(obj) + 
+              "\n\n_" + bidPay() + "_")
+          }
+        })
+    })
 }
 
 var bidHelp = "*Usage for the /bid command:*\n"
@@ -235,29 +259,6 @@ var bidHelp = "*Usage for the /bid command:*\n"
  + "`/bid abort`  abort the current auction\n"
  + "`/bid help`  show this (see expost.padm.us/sealedbids for gory details)"
 
-var bidPay = function() {
-  var tenx = bern(0.1)
-  var parade = ":money_with_wings: :moneybag: :money_mouth_face:"
-  return "Bernoulli[.1] says " + (tenx ? "PAY 10X! " + parade : "no payments!")
-}
-
-// Add text as user's bid, shout the results if user is the last one to bid
-var procBid = function(res, chan, user, text) {
-  redis.hset("beebot.auctions." + chan + ".bids", user, text, 
-    function(err, obj) {
-      redis.hgetall("beebot.auctions." + chan + ".bids", 
-        function(err, obj) { // obj is now the hash from users to bids
-          if(stragglers(obj)) { 
-            res.send("Got your bid: " + text) 
-          } else {
-            bidEnd(chan)
-            shout(res, "*Bidding complete!*\n" + bidSummary(obj) + 
-              "\n\n_" + bidPay() + "_")
-          }
-        })
-    })
-}
-
 app.post('/bid', function(req, res) {
   if(req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
     res.send("This request didn't come from Slack!")
@@ -265,7 +266,7 @@ app.post('/bid', function(req, res) {
   var chan = req.body.channel_id
   var user = req.body.user_name
   var text = req.body.text
-  var others = attabid(text)
+  var others = bidParse(text)
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
     if(obj) { //--------------------------------- active auction in this channel
       if(!isEmpty(others)) { // has @-mentions
@@ -279,12 +280,12 @@ app.post('/bid', function(req, res) {
         bidAsyncShout(res, chan, 
           "*Aborted.* :panda_face: Partial results:\n$SUMMARY" 
           + "\n\n_" + bidPay() + "_")
-        bidEnd(chan)
+        bidReset(chan)
       } else if(text === "help") {
         shout(res, bidHelp)
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
-        procBid(res, chan, user, text)
+        bidProc(res, chan, user, text)
       }
     } else { //------------------------------- no active auction in this channel
       if(!isEmpty(others)) { // has @-mentions => start an auction!
