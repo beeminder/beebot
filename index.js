@@ -175,17 +175,17 @@ var isEmpty = function(obj) { return Object.keys(obj).length === 0 }
 var attabid = function(s) {
   var pattern = /\B@[a-z0-9_-]+/gi // regex for @-mentions, HT StackOverflow
   var users = {}
-  if(s.match(pattern)) {
+  if(s.match(pattern)) { // RegExp.exec() might avoid doing match in 2 places
     s.match(pattern).forEach(function(u) { users[u.replace("@", "")] = "" })
   }
   return users
 }
 
-// Returns a string representation of the hash of everyone's bids
+// Returns a string representation of the hash (user->bid) of everyone's bids
 var bidSummary = function(bids) {
-  return Object.keys(bids).map(function(u) { 
-    return bids[u] ? "\t@" + u + ": " + bids[u] : ""
-  }).join("\n")
+  var row = function(u) { return bids[u] ? "\t@" + u + ": " + bids[u] 
+                                         : "\t~@" + u + "~" }
+  return Object.keys(bids).map(row).join("\n")
 }
 
 // Takes hash of users->bids, constructs a string like 
@@ -198,12 +198,14 @@ var bidStatus = function(bids) {
     + "}"
 }
 
-// Shouts template string, substituting $SUMMARY and $STATUS per above functions
+// Fetches the hash of bids, h, and then shouts the string indicated by the 
+// template, substituting $SUMMARY and $STATUS with bidSummary(h) and 
+// bidStatus(h), respectively.
 // (The goofiness with passing in a template and substituting is that hgetall
-// is asynchronous so we can't use it to return a string that we can then use
-// to compose subsequent messages. Ie, when we actually fetch the bids that's
-// when we have to do whatever we're going to do with them, in this case shout
-// them.)
+// is asynchronous. If it were synchronous we'd just fetch the hash of bids and 
+// then use that to format the output when ready to output it. Instead we need 
+// to pass a callback function to hgetall and let that function do whatever it's
+// going to do with the bid hash -- in our case shout it in the channel.)
 var bidAsyncShout = function(res, chan, template) {
   redis.hgetall("beebot.auctions." + chan + ".bids", function(err, obj) {
     shout(res, template.replace("$SUMMARY", bidSummary(obj))
@@ -234,12 +236,12 @@ var bidHelp = "*Usage for the /bid command:*\n"
  + "`/bid help`  show this (see expost.padm.us/sealedbids for gory details)"
 
 var bidPay = function() {
+  var tenx = bern(0.1)
   var parade = ":money_with_wings: :moneybag: :money_mouth_face:"
-  return "Bernoulli[0.1] says " 
-    + (bern(0.1) ? "PAY 10X! " + parade : "no payments!")
+  return "Bernoulli[.1] says " + (tenx ? "PAY 10X! " + parade : "no payments!")
 }
 
-// Add text as user's bid, shout the results if no remaining stragglers
+// Add text as user's bid, shout the results if user is the last one to bid
 var procBid = function(res, chan, user, text) {
   redis.hset("beebot.auctions." + chan + ".bids", user, text, 
     function(err, obj) {
