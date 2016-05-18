@@ -149,7 +149,7 @@ var shout = function(res, txt) {
 
 var whisp = function(res, txt, att) {
   att = typeof att !== 'undefined' ? att : null
-  res.send({ "response_type": "in_channel",
+  res.send({ "response_type": "ephemeral",
              "text": txt,
              "attachments": [{"text": att}]})
 }
@@ -282,8 +282,8 @@ var bidProc = function(res, chan, user, text, rurl) {
 }
 
 var bidHelp = function(res) { 
-  whisp(res, "How to use /bid", 
-    "`/bid stuff with @-mentions` start new auction with the mentioned people\n"
+  whisp(res, "How to use /bid\n"
+  + "`/bid stuff with @-mentions` start new auction with the mentioned people\n"
   + "`/bid stuff` submit your bid (fine to resubmit till last person bids)\n"
   + "`/bid` (with no args) check who has bid and who we're waiting on\n"
   + "`/bid status` show how current auction was initiated and who has bid\n"
