@@ -253,7 +253,7 @@ var bidProc = function(res, chan, user, text) {
 
 var bidStart = function(res, chan, user, others) {
   others[user] = "" // "others" now includes iniating user too
-  redis.hmset("beebot.auctions." + chan + ".bids", others, function(e,o) { })
+  redis.hmset("beebot.auctions." + chan + ".bids", others, function(err,obj){})
   var auction = {}
   auction.urtext = "/bid " + text.trim()
   auction.initiator = user
