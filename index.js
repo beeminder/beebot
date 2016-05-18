@@ -147,6 +147,8 @@ var shout = function(res, txt) {
   res.send({ "response_type": "in_channel", "text": txt })
 }
 
+// Respond with string txt (and optional text attachment att) to just the user
+// who issued the slash command, and don't echo their slash command. WHISPer.
 var whisp = function(res, txt, att) {
   att = typeof att !== 'undefined' ? att : null
   res.send({ "response_type": "ephemeral",
@@ -172,7 +174,7 @@ app.post('/roll', function(req, res) {
   var text = req.body.text
   var n = parseInt(text)
   if(isNaN(n)) {
-    res.send("Pssst, this is not an integer: " + text)
+    whisp(res, "Pssst, this is not an integer: " + text)
   } else if(n <= 0) {
     shout(res, "Rolling " + n + "-sided die... "
       + (bern(0.1) ? ":poop:" : ":boom:")
@@ -268,7 +270,7 @@ var bidProc = function(res, chan, user, text, rurl) {
     function(err, obj) {
       redis.hgetall("beebot.auctions." + chan + ".bids", 
         function(err, obj) { // obj is now the hash from users to bids
-          res.send("Got your bid: " + text) 
+          whisp(res, "Got your bid: " + text) 
           if(bidMissing(obj)) { 
             shoutDelayed(rurl, "New bid from " + user + "! " + bidStatus(obj))
           } else {
@@ -293,7 +295,7 @@ var bidHelp = function(res) {
 
 app.post('/bid', function(req, res) {
   if(req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
-    res.send("This request didn't come from Slack!")
+    whisp(res, "This request didn't come from Slack!")
   }
   var rurl = req.body.response_url // for delayed responses to slash commands
   var chan = req.body.channel_id
@@ -304,7 +306,7 @@ app.post('/bid', function(req, res) {
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
     if(obj) { //--------------------------------- active auction in this channel
       if(!isEmpty(others)) {
-        res.send(urtext + "No @-mentions allowed in bids! Try `/bid help`")
+        whisp(res, urtext + "No @-mentions allowed in bids! Try `/bid help`")
       } else if(text === "") { // no args
         bidAsyncShout(res, chan, "$STATUS")
       } else if(text === "status") {
@@ -326,13 +328,13 @@ app.post('/bid', function(req, res) {
       }
     } else { //------------------------------- no active auction in this channel
       if(!isEmpty(others))       { bidStart(res, chan, user, text, others) }
-      else if(text === "")       { res.send(urtext + "No current auction") }
+      else if(text === "")       { whisp(res, urtext + "No current auction") }
       else if(text === "status") { shout(res, "No current auction") }
-      else if(text === "abort")  { res.send(urtext + "No current auction") }
+      else if(text === "abort")  { whisp(res, urtext + "No current auction") }
       else if(text === "help")   { bidHelp(res) }
-      else if(text === "debug")  { res.send(urtext + "No current auction") }
+      else if(text === "debug")  { whisp(res, urtext + "No current auction") }
       else { // if the text is anything else then it would be a normal bid
-        res.send("/bid " + text + "\nNo current auction! Try `/bid help`")
+        whisp(res, "/bid " + text + "\nNo current auction! Try `/bid help`")
       }
     }
   })
