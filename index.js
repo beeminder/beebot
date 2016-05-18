@@ -308,8 +308,7 @@ app.post('/bid', function(req, res) {
         shout(res, bidHelp)
       } else if(text === "debug")  { 
         res.send(urtext + "whispered reply. obj = " + JSON.stringify(obj))
-        request.post(rurl, { json: { "response_type": "in_channel", //ephemeral
-          "text": "shouted reply"} }, function(err, res, bod){})
+        shoutDelayed(rurl, "Now we can reply publicly w/out echoing the cmd!")
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
         bidProc(res, chan, user, text, rurl)
