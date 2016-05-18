@@ -252,8 +252,10 @@ var bidProc = function(res, chan, user, text) {
 }
 
 var bidStart = function(res, chan, user, others) {
-  others[user] = "" // "others" now includes iniating user too
-  redis.hmset("beebot.auctions." + chan + ".bids", others, function(err,obj){})
+  var bids = {};
+  Object.keys(others).forEach(function(key) { bids[key] = others[key] })
+  bids[user] = "" // bids now includes iniating user too
+  redis.hmset("beebot.auctions." + chan + ".bids", bids, function(err,obj) { })
   var auction = {}
   auction.urtext = "/bid " + text.trim()
   auction.initiator = user
@@ -305,7 +307,7 @@ app.post('/bid', function(req, res) {
       else if(text === "status") { shout(res, "No current auction") }
       else if(text === "abort")  { res.send("Error: No current auction!") }
       else if(text === "help")   { res.send(bidHelp) }
-      //else if(text === "debug")  { shout(res, bidStatus(obj)) }
+      else if(text === "debug")  { shout(res, bidStatus(obj)) }
       else { // if the text is anything else then it would be a normal bid
         res.send("Error: No current auction!\nYour attempted bid: " + text
           + "\nDo `/bid help` if confused.")
