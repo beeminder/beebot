@@ -252,12 +252,12 @@ var bidProc = function(res, chan, user, text) {
 }
 
 var bidStart = function(res, chan, user, text, others) {
-  var bids = {}
-  Object.keys(others).forEach(function(key) { bids[key] = others[key] })
-  bids[user] = "" // bids now includes iniating user too
+  //var bids = {}
+  //Object.keys(others).forEach(function(key) { bids[key] = others[key] })
+  //bids[user] = "" // bids now includes iniating user too
   //TODO allowed to just modify "others" directly?
-  //others[user] = ""
-  redis.hmset("beebot.auctions." + chan + ".bids", bids, function(err,obj){})
+  others[user] = "" // "others" now includes initiating user too
+  redis.hmset("beebot.auctions." + chan + ".bids", others, function(err,obj){})
   var auction = {}
   auction.urtext = "/bid " + text.trim()
   auction.initiator = user
