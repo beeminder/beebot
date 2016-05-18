@@ -150,7 +150,7 @@ var shout = function(res, txt) {
 // Post string txt to everyone in the channel, no echoing of the slash command
 var shoutDelayed = function(rurl, txt) {
   request.post(rurl, { json: { 
-    "response_type": "ephemeral", // ephemeral vs in_channel
+    "response_type": "in_channel", // in_channel vs ephemeral
     "text": txt} 
   }, function(error, response, body) { }) // error handling? pshaw.
 }
@@ -261,11 +261,13 @@ var bidProc = function(res, chan, user, text, rurl) {
     function(err, obj) {
       redis.hgetall("beebot.auctions." + chan + ".bids", 
         function(err, obj) { // obj is now the hash from users to bids
+          res.send("Got your bid: " + text) 
           if(bidMissing(obj)) { 
-            res.send("Got your bid: " + text) 
+            shoutDelayed(rurl, "New bid from " + user + "! " + bidStatus(obj))
           } else {
             bidReset(chan)
-            shout(res, "*Bidding complete!* :tada: Results:\n" 
+            shoutDelayed(rurl, 
+              "*Final bid from " + user + "!* :tada: Results:\n" 
               + bidSummary(obj) + "\n\n_" + bidPay() + "_")
           }
         })
@@ -307,7 +309,7 @@ app.post('/bid', function(req, res) {
       } else if(text === "help") {
         shout(res, bidHelp)
       } else if(text === "debug")  { 
-        res.send(urtext + "whispered reply. obj = " + JSON.stringify(obj))
+        res.send(urtext + "Whispered reply. obj = " + JSON.stringify(obj))
         shoutDelayed(rurl, "Now we can reply publicly w/out echoing the cmd!")
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
