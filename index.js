@@ -197,6 +197,11 @@ var bidStatus = function(bids) {
     + "}"
 }
 
+// Returns whether any of the bids are missing
+var bidMissing = function(bids) {
+  return Object.keys(bids).some(function(x) { return !bids[x] })
+}
+
 // Fetches the hash of bids, h, and then shouts the string indicated by the 
 // template, substituting $SUMMARY and $STATUS with bidSummary(h) and 
 // bidStatus(h), respectively.
@@ -212,9 +217,16 @@ var bidAsyncShout = function(res, chan, template) {
   })
 }
 
-// Returns whether any of the bids are missing
-var bidMissing = function(bids) {
-  return Object.keys(bids).some(function(x) { return !bids[x] })
+// Initialize the auction and shot that it's started
+var bidStart = function(res, chan, user, text, others) {
+  others[user] = "" // "others" now includes initiating user too
+  redis.hmset("beebot.auctions." + chan + ".bids", others, function(err,obj){})
+  var auction = {}
+  auction.urtext = "/bid " + text.trim()
+  auction.initiator = user
+  redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
+    bidAsyncShout(res, chan, "Auction started! $STATUS")
+  })
 }
 
 // Deletes all the bids
@@ -251,21 +263,6 @@ var bidProc = function(res, chan, user, text) {
     })
 }
 
-var bidStart = function(res, chan, user, text, others) {
-  //var bids = {}
-  //Object.keys(others).forEach(function(key) { bids[key] = others[key] })
-  //bids[user] = "" // bids now includes iniating user too
-  //TODO allowed to just modify "others" directly?
-  others[user] = "" // "others" now includes initiating user too
-  redis.hmset("beebot.auctions." + chan + ".bids", others, function(err,obj){})
-  var auction = {}
-  auction.urtext = "/bid " + text.trim()
-  auction.initiator = user
-  redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
-    bidAsyncShout(res, chan, "Auction started! $STATUS")
-  })
-}
-
 var bidHelp = "*How to use the /bid command:*\n"
  + "`/bid stuff with @-mentions`  start new auction with the mentioned people\n"
  + "`/bid stuff`  submit your bid (fine to resubmit till last person bids)\n"
@@ -281,12 +278,12 @@ app.post('/bid', function(req, res) {
   var chan = req.body.channel_id
   var user = req.body.user_name
   var text = req.body.text
+  var urtext = "/bid " + text + "\n"
   var others = bidParse(text)
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
-    // why isn't obj.bids available in this callback? maybe test that again...
     if(obj) { //--------------------------------- active auction in this channel
-      if(!isEmpty(others)) { // has @-mentions
-        res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
+      if(!isEmpty(others)) {
+        res.send(urtext + "No @-mentions allowed in bids! Try `/bid help`")
       } else if(text === "") { // no args
         bidAsyncShout(res, chan, "$STATUS")
       } else if(text === "status") {
@@ -300,21 +297,20 @@ app.post('/bid', function(req, res) {
       } else if(text === "help") {
         shout(res, bidHelp)
       } else if(text === "debug")  { 
-        res.send("Why does it barf if I try to access obj.bids here?")
+        res.send(urtext + "Why does it barf if I try to access obj.bids here?")
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
         bidProc(res, chan, user, text)
       }
     } else { //------------------------------- no active auction in this channel
       if(!isEmpty(others))       { bidStart(res, chan, user, text, others) }
-      else if(text === "")       { res.send("No current auction") }
+      else if(text === "")       { res.send(urtext + "No current auction") }
       else if(text === "status") { shout(res, "No current auction") }
-      else if(text === "abort")  { res.send("No current auction to abort") }
+      else if(text === "abort")  { res.send(urtext + "No current auction") }
       else if(text === "help")   { res.send(bidHelp) }
-      else if(text === "debug")  { res.send("No current auction") }
+      else if(text === "debug")  { res.send(urtext + "No current auction") }
       else { // if the text is anything else then it would be a normal bid
-        res.send("Error: No current auction!\nYour attempted bid: " + text
-          + "\nDo `/bid help` if confused.")
+        res.send("/bid " + text + "\nNo current auction! Try `/bid help`")
       }
     }
   })
