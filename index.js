@@ -142,9 +142,17 @@ app.post('/zeno', function(req, res) {
 
 app.get('/debugger', function(req, res) { debugger; });
 
-// Say the string txt to everyone in the channel
+// Respond with string txt to everyone in the channel, echoing the slash command
 var shout = function(res, txt) {
   res.send({ "response_type": "in_channel", "text": txt })
+}
+
+// Post string txt to everyone in the channel, no echoing of the slash command
+var shoutDelayed = function(rurl, txt) {
+  request.post(rurl, { json: { 
+    "response_type": "ephemeral", // ephemeral vs in_channel
+    "text": txt} 
+  }, function(error, response, body) { }) // error handling? pshaw.
 }
 
 // Bernoulli trial with probability p
@@ -242,8 +250,9 @@ var bidReset = function(chan) {
 // command doesn't actually parse out numbers or deal with payments in any way.
 var bidPay = function() {
   var tenx = bern(0.1)
-  var parade = ":money_with_wings: :moneybag: :money_mouth_face:"
-  return "Bernoulli[.1] says " + (tenx ? "PAY 10X! " + parade : "no payments!")
+  return "Bernoulli[.1] says " 
+    + (tenx ? "PAY 10X! :money_with_wings: :moneybag: :money_mouth_face:" :
+              "no payments! :sweat_smile:")
 }
 
 // Add text as user's bid, shout the results if user is the last one to bid
@@ -298,9 +307,9 @@ app.post('/bid', function(req, res) {
       } else if(text === "help") {
         shout(res, bidHelp)
       } else if(text === "debug")  { 
-        //res.send(urtext + "obj = " + JSON.stringify(obj))
+        res.send(urtext + "whispered reply. obj = " + JSON.stringify(obj))
         request.post(rurl, { json: { "response_type": "in_channel", //ephemeral
-          "text": "obj = " + JSON.stringify(obj) }}, function(err, res, bod){})
+          "text": "shouted reply"} }, function(err, res, bod){})
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
         bidProc(res, chan, user, text, rurl)
