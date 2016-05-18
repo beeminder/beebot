@@ -297,7 +297,7 @@ app.post('/bid', function(req, res) {
       } else if(text === "help") {
         shout(res, bidHelp)
       } else if(text === "debug")  { 
-        res.send(urtext + "Why does it barf if I try to access obj.bids here?")
+        res.send(urtext + "obj = " + JSON.stringify(obj))
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
         bidProc(res, chan, user, text)
