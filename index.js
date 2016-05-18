@@ -251,12 +251,23 @@ var bidProc = function(res, chan, user, text) {
     })
 }
 
-var bidHelp = "*Usage for the /bid command:*\n"
+var bidStart = function(res, chan, user, others) {
+  others[user] = "" // "others" now includes iniating user too
+  redis.hmset("beebot.auctions." + chan + ".bids", others, function(e,o) { })
+  var auction = {}
+  auction.urtext = "/bid " + text.trim()
+  auction.initiator = user
+  redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
+    bidAsyncShout(res, chan, "Auction started! $STATUS")
+  })
+}
+
+var bidHelp = "*How to use the /bid command:*\n"
  + "`/bid stuff with @-mentions`  start new auction with the mentioned people\n"
- + "`/bid stuff`  submit your bid (can resubmit till last person bids)\n"
- + "`/bid`  with no args, check who has bid\n"
+ + "`/bid stuff`  submit your bid (fine to resubmit till last person bids)\n"
+ + "`/bid`  (with no args) check who has bid and who we're waiting on\n"
  + "`/bid status`  show how current auction was initiated and who has bid\n"
- + "`/bid abort`  abort the current auction\n"
+ + "`/bid abort`  abort the current auction, showing partial results\n"
  + "`/bid help`  show this (see expost.padm.us/sealedbids for gory details)"
 
 app.post('/bid', function(req, res) {
@@ -268,6 +279,7 @@ app.post('/bid', function(req, res) {
   var text = req.body.text
   var others = bidParse(text)
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
+    // why isn't obj.bids available in this callback? maybe test that again...
     if(obj) { //--------------------------------- active auction in this channel
       if(!isEmpty(others)) { // has @-mentions
         res.send("No @-mentions allowed in bids! Do `/bid help` if confused.")
@@ -288,20 +300,12 @@ app.post('/bid', function(req, res) {
         bidProc(res, chan, user, text)
       }
     } else { //------------------------------- no active auction in this channel
-      if(!isEmpty(others)) { // has @-mentions => start an auction!
-        others[user] = "" // "others" now includes iniating user too
-        redis.hmset("beebot.auctions." + chan + ".bids", others,
-          function(err, obj) { })
-        var auction = {}
-        auction.urtext = "/bid " + text.trim()
-        auction.initiator = user
-        redis.hmset("beebot.auctions." + chan, auction, function(err, obj) {
-          bidAsyncShout(res, chan, "Auction started! $STATUS")
-        }) }
+      if(!isEmpty(others))       { bidStart(res, chan, user, others) }
       else if(text === "")       { res.send("No current auction!") }
       else if(text === "status") { shout(res, "No current auction") }
       else if(text === "abort")  { res.send("Error: No current auction!") }
       else if(text === "help")   { res.send(bidHelp) }
+      else if(text === "debug")  { shout(res, bidStatus(obj)) }
       else { // if the text is anything else then it would be a normal bid
         res.send("Error: No current auction!\nYour attempted bid: " + text
           + "\nDo `/bid help` if confused.")
