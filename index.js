@@ -147,6 +147,13 @@ var shout = function(res, txt) {
   res.send({ "response_type": "in_channel", "text": txt })
 }
 
+var whisp = function(res, txt, att) {
+  att = typeof att !== 'undefined' ? att : null
+  res.send({ "response_type": "in_channel",
+             "text": txt,
+             "attachments": [{"text": att}]})
+}
+
 // Post string txt to everyone in the channel, no echoing of the slash command
 var shoutDelayed = function(rurl, txt) {
   request.post(rurl, { json: { 
@@ -274,13 +281,15 @@ var bidProc = function(res, chan, user, text, rurl) {
     })
 }
 
-var bidHelp = "*How to use the /bid command:*\n"
- + "`/bid stuff with @-mentions`  start new auction with the mentioned people\n"
- + "`/bid stuff`  submit your bid (fine to resubmit till last person bids)\n"
- + "`/bid`  (with no args) check who has bid and who we're waiting on\n"
- + "`/bid status`  show how current auction was initiated and who has bid\n"
- + "`/bid abort`  abort the current auction, showing partial results\n"
- + "`/bid help`  show this (see expost.padm.us/sealedbids for gory details)"
+var bidHelp = function(res) { 
+  whisp(res, "How to use /bid", 
+    "`/bid stuff with @-mentions` start new auction with the mentioned people\n"
+  + "`/bid stuff` submit your bid (fine to resubmit till last person bids)\n"
+  + "`/bid` (with no args) check who has bid and who we're waiting on\n"
+  + "`/bid status` show how current auction was initiated and who has bid\n"
+  + "`/bid abort` abort the current auction, showing partial results\n"
+  + "`/bid help` show this (see expost.padm.us/sealedbids for gory details)")
+}
 
 app.post('/bid', function(req, res) {
   if(req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
@@ -307,10 +316,10 @@ app.post('/bid', function(req, res) {
           + "\n\n_" + bidPay() + "_")
         bidReset(chan)
       } else if(text === "help") {
-        shout(res, bidHelp)
+        bidHelp(res)
       } else if(text === "debug")  { 
-        res.send(urtext + "Whispered reply. obj = " + JSON.stringify(obj))
-        shoutDelayed(rurl, "Now we can reply publicly w/out echoing the cmd!")
+        whisp(res, urtext + "Whispered reply. obj = " + JSON.stringify(obj))
+        shoutDelayed(rurl, "We can also reply publicly w/out echoing the cmd!")
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
         bidProc(res, chan, user, text, rurl)
@@ -320,7 +329,7 @@ app.post('/bid', function(req, res) {
       else if(text === "")       { res.send(urtext + "No current auction") }
       else if(text === "status") { shout(res, "No current auction") }
       else if(text === "abort")  { res.send(urtext + "No current auction") }
-      else if(text === "help")   { res.send(bidHelp) }
+      else if(text === "help")   { bidHelp(res) }
       else if(text === "debug")  { res.send(urtext + "No current auction") }
       else { // if the text is anything else then it would be a normal bid
         res.send("/bid " + text + "\nNo current auction! Try `/bid help`")
