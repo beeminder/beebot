@@ -247,7 +247,7 @@ var bidPay = function() {
 }
 
 // Add text as user's bid, shout the results if user is the last one to bid
-var bidProc = function(res, chan, user, text) {
+var bidProc = function(res, chan, user, text, rurl) {
   redis.hset("beebot.auctions." + chan + ".bids", user, text, 
     function(err, obj) {
       redis.hgetall("beebot.auctions." + chan + ".bids", 
@@ -256,8 +256,8 @@ var bidProc = function(res, chan, user, text) {
             res.send("Got your bid: " + text) 
           } else {
             bidReset(chan)
-            shout(res, "*Bidding complete!*\n" + bidSummary(obj) + 
-              "\n\n_" + bidPay() + "_")
+            shout(res, "*Bidding complete!* :tada: Results:\n" 
+              + bidSummary(obj) + "\n\n_" + bidPay() + "_")
           }
         })
     })
@@ -275,10 +275,11 @@ app.post('/bid', function(req, res) {
   if(req.body.token != "yzHrfswp6FcUbqwJP4ZllUi6") {
     res.send("This request didn't come from Slack!")
   }
+  var rurl = req.body.response_url // for delayed responses to slash commands
   var chan = req.body.channel_id
   var user = req.body.user_name
   var text = req.body.text
-  var urtext = "/bid " + text + "\n"
+  var urtext = "*/bid " + text + "*\n"
   var others = bidParse(text)
   redis.hgetall("beebot.auctions." + chan, function(err, obj) {
     if(obj) { //--------------------------------- active auction in this channel
@@ -297,10 +298,12 @@ app.post('/bid', function(req, res) {
       } else if(text === "help") {
         shout(res, bidHelp)
       } else if(text === "debug")  { 
-        res.send(urtext + "obj = " + JSON.stringify(obj))
+        //res.send(urtext + "obj = " + JSON.stringify(obj))
+        request.post(rurl, { json: { "response_type": "in_channel", //ephemeral
+          "text": "obj = " + JSON.stringify(obj) }}, function(err, res, bod){})
       } else {  // if the text is anything else then it's a normal bid
         // could check if user has an old bid so we can say "Updated your bid"
-        bidProc(res, chan, user, text)
+        bidProc(res, chan, user, text, rurl)
       }
     } else { //------------------------------- no active auction in this channel
       if(!isEmpty(others))       { bidStart(res, chan, user, text, others) }
