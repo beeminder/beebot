@@ -170,6 +170,7 @@ var bern = function(p) { return (Math.random() < p) }
 // Random integer from 1 to n inclusive
 var randint = function(n) { return Math.floor(Math.random()*n)+1 }
 
+// TODO: whisper help in response to /roll or /roll help
 app.post('/roll', function(req, res) {
   var text = req.body.text
   var n = parseInt(text)
