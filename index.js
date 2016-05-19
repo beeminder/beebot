@@ -356,7 +356,9 @@ app.post('/tock', function(req, res) {
         obj.forEach(function(e) {
           var tock = JSON.parse(e);
           if (tock.user === user) {
-            redis.zremrangebyscore("beebot.tockbot.tocks." + chan, tock.dueby, tock.dueby,
+            redis.zremrangebyscore("beebot.tockbot.tocks." + chan,
+              tock.dueby,
+              tock.dueby,
               function(err, obj) {
                 shout(res, "Ended tock for " + user);
                 return;
@@ -368,12 +370,14 @@ app.post('/tock', function(req, res) {
     );
     whisp(res, "You don't have an active tock");
   } else if (text === "done") {
-    var foundTock = false;
     redis.zrangebyscore("beebot.tockbot.tocks." + chan, Date.now(), "inf",
       function(err, obj) {
+        var foundTock = false;
+        if (!obj) { whisp(res, "You don't have an active tock"); return; }
         obj.forEach(function(e) {
           var tock = JSON.parse(e);
           if (tock.user === user) {
+            foundTock = true;
             redis.zremrangebyscore("beebot.tockbot.tocks." + chan,
               tock.dueby,
               tock.dueby,
@@ -386,11 +390,9 @@ app.post('/tock', function(req, res) {
                       updateBeeminder(team_id, user_id, obj, tock.text);
                       shout(res, user + " completed tock: " + tock.text +
                         " :tada:\nUpdating Beeminder goal now...");
-                      foundTock = true;
                     } else {
                       shout(res, user + " completed tock: " + tock.text +
                         " :tada:");
-                      foundTock = true;
                     }
                   }
                 );
@@ -398,32 +400,42 @@ app.post('/tock', function(req, res) {
             );
           }
         });
+        if (!foundTock) {
+          whisp(res, "You don't have an active tock");
+        }
       }
     );
-    if (!foundTock) {
-      whisp(res, "You don't have an active tock");
-    }
   } else if (text === "help" || text === "") {
     // Whisper the documentation
     whisp(res, "How to use /tock\n"
-    + "`/tock text` start a 45-minute tock to complete `text`\n"
+    + "`/tock text` start a tock to complete `text`\n"
     + "`/tock done` mark current tock complete\n"
     + "`/tock status` show all tocks in this channel\n"
-    + "`/tock beemind goalname` link your tocks to a Beeminder goal named " +
-    "`goalname`. Completing a tock will send a datapoint of \"1\" with " +
-    "the tock text as the comment to Beeminder.\n"
+    + "`/tock beemind goalname` link your tocks to a Beeminder goal named "
+    + "`goalname`. Completing a tock will send a datapoint of \"1\" with "
+    + "the tock text as the comment to Beeminder.\n"
     + "`/tock unlink` unlink your tocks from Beeminder\n"
     + "`/tock abort` ends your tock\n"
+    + "`/tock length N` changes the default tock length for the channel to"
+    + "`N` minutes\n"
     + "`/tock help` show this message")
   } else if (text == "unlink") {
-    redis.del("beebot.tockbot.links." + team_id + "." + user, function(err, obj) {
-      shout(res, "Unlinked tocks from Beeminder for " + user);
+    redis.del("beebot.tockbot.links." + team_id + "." + user,
+      function(err, obj) {
+        shout(res, "Unlinked tocks from Beeminder for " + user);
     });
   } else if (text.match(/^beemind/)) {
     var goalname = text.split(" ")[1];
-    redis.set("beebot.tockbot.links." + team_id + "." + user, goalname,
+    redis.set("beebot.tockbot.links."+ team_id + "." + user, goalname,
       function(err, obj) {
-        shout(res, "Linked tocks for " + user + " to Beeminder goal " + goalname);
+        shout(res, "Linked tocks for "+ user +" to Beeminder goal "+ goalname);
+    });
+  } else if (text.match(/^length ([\d]*)/)) {
+    var length = text.match(/^length ([\d]*)/)[1];
+    redis.set("beebot.tockbot.tocks." + chan + ".length", length,
+      function(err, obj) {
+        shout(res, "New tocks are now "+ length +" minutes long. Active tocks "+
+          "are unaffected.");
     });
   } else if (text === "status") {
     redis.zrangebyscore("beebot.tockbot.tocks." + chan, Date.now(), "inf",
@@ -431,26 +443,35 @@ app.post('/tock', function(req, res) {
         var rText = "";
         obj.forEach(function(e) {
           var tock = JSON.parse(e);
-          rText += user + " is working on " + tock.text + " until " + tock.dueby + "\n";
+          var date = new Date(tock.dueby);
+          var now =  new Date();
+          var minutes = Math.floor(((date - now)/1000)/60);
+          var seconds = ((date - now)/1000) % 60;
+          rText += user + " is working on " + tock.text + ". Due in " +
+            minutes + " minutes " + seconds + " seconds" + "\n";
         });
-        if (rText === "") { rText = "No active tocks - get to work, slackers!"; }
+        if (rText === "") { rText = "No active tocks - get to work, slackers!";}
         shout(res, rText);
       }
     );
   } else {
-    var dueby = Date.now() + 1000*60*45; // 45 minutes
-    var tock = {
-      chan: chan,
-      team_id: team_id,
-      user: user,
-      text: text,
-      dueby: dueby
-    };
-    redis.zadd("beebot.tockbot.tocks." + chan, dueby, JSON.stringify(tock),
-      function(err, obj) {
-        shout(res, "Started tock for " + user + ": " + text);
-      }
-    );
+    redis.get("beebot.tockbot.tocks." + chan + ".length", function(err, obj) {
+      var length = 45;
+      if (obj) { length = obj - 0; }
+      var dueby = Date.now() + 1000*60*length;
+      var tock = {
+        chan: chan,
+        team_id: team_id,
+        user: user,
+        text: text,
+        dueby: dueby
+      };
+      redis.zadd("beebot.tockbot.tocks." + chan, dueby, JSON.stringify(tock),
+        function(err, obj) {
+          shout(res, "Started tock for " + user + ": " + text);
+        }
+      );
+    });
   }
 })
 
