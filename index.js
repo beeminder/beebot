@@ -353,22 +353,25 @@ app.post('/tock', function(req, res) {
   if (text === "abort") {
     redis.zrangebyscore("beebot.tockbot.tocks." + chan, Date.now(), "inf",
       function(err, obj) {
+        var foundTock = false;
         obj.forEach(function(e) {
           var tock = JSON.parse(e);
           if (tock.user === user) {
+            foundTock = true;
             redis.zremrangebyscore("beebot.tockbot.tocks." + chan,
               tock.dueby,
               tock.dueby,
               function(err, obj) {
                 shout(res, "Ended tock for " + user);
-                return;
               }
             );
           }
         });
+        if (!foundTock) {
+          whisp(res, "You don't have an active tock");
+        }
       }
     );
-    whisp(res, "You don't have an active tock");
   } else if (text === "done") {
     redis.zrangebyscore("beebot.tockbot.tocks." + chan, Date.now(), "inf",
       function(err, obj) {
