@@ -504,9 +504,9 @@ app.post("/tockcheck", function(req, res) {
           });
         }
       );
-      res.send("ok");
     }
   });
+  res.send("ok");
 })
 // END TOCKBOT //
 
