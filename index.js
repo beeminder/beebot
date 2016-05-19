@@ -435,7 +435,7 @@ app.post('/tock', function(req, res) {
     });
   } else if (text.match(/^length ([\d]*)/)) {
     var length = text.match(/^length ([\d]*)/)[1];
-    redis.set("beebot.tockbot.tocks." + chan + ".length", length,
+    redis.set("beebot.tockbot.channels." + chan + ".length", length,
       function(err, obj) {
         shout(res, "New tocks are now "+ length +" minutes long. Active tocks "+
           "are unaffected.");
@@ -458,7 +458,7 @@ app.post('/tock', function(req, res) {
       }
     );
   } else {
-    redis.get("beebot.tockbot.tocks." + chan + ".length", function(err, obj) {
+    redis.get("beebot.tockbot.channels." + chan + ".length", function(err, obj) {
       var length = 45;
       if (obj) { length = obj - 0; }
       var dueby = Date.now() + 1000*60*length;
