@@ -368,6 +368,7 @@ app.post('/tock', function(req, res) {
     );
     whisp(res, "You don't have an active tock");
   } else if (text === "done") {
+    var foundTock = false;
     redis.zrangebyscore("beebot.tockbot.tocks." + chan, Date.now(), "inf",
       function(err, obj) {
         obj.forEach(function(e) {
@@ -385,11 +386,11 @@ app.post('/tock', function(req, res) {
                       updateBeeminder(team_id, user_id, obj, tock.text);
                       shout(res, user + " completed tock: " + tock.text +
                         " :tada:\nUpdating Beeminder goal now...");
-                      return;
+                      foundTock = true;
                     } else {
                       shout(res, user + " completed tock: " + tock.text +
                         " :tada:");
-                      return;
+                      foundTock = true;
                     }
                   }
                 );
@@ -399,7 +400,9 @@ app.post('/tock', function(req, res) {
         });
       }
     );
-    whisp(res, "You don't have an active tock");
+    if (!foundTock) {
+      whisp(res, "You don't have an active tock");
+    }
   } else if (text === "help" || text === "") {
     // Whisper the documentation
     whisp(res, "How to use /tock\n"
@@ -430,6 +433,7 @@ app.post('/tock', function(req, res) {
           var tock = JSON.parse(e);
           rText += user + " is working on " + tock.text + " until " + tock.dueby + "\n";
         });
+        if (rText === "") { rText = "No active tocks - get to work, slackers!"; }
         shout(res, rText);
       }
     );
