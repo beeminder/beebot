@@ -258,10 +258,12 @@ var bidReset = function(chan) {
 // Just returns a string about whether to 10X the payments. Note that the /bid
 // command doesn't actually parse out numbers or deal with payments in any way.
 var bidPay = function() {
-  var tenx = bern(0.1)
-  return "Bernoulli[.1] says " 
-    + (tenx ? "PAY 10X! :money_with_wings: :moneybag: :money_mouth_face:" :
-              "no payments! :sweat_smile:")
+  //var tenx = bern(0.1)
+  var roll = randint(10) // randint(10)==1 is the same as bern(.1)
+  return "/roll 10 → " + roll + " ⇒ "
+  //return "Bernoulli[.1] says " 
+    + (roll===1 ? "PAY 10X! :money_with_wings: :moneybag: :money_mouth_face:" :
+                  "no payments! :sweat_smile:")
 }
 
 // Add text as user's bid, shout the results if user is the last one to bid
@@ -276,13 +278,14 @@ var bidProc = function(res, chan, user, text, rurl) {
           } else {
             bidReset(chan)
             shoutDelayed(rurl, 
-              "*Final bid from " + user + "!* :tada: Results:\n" 
+              "Got final bid from " + user + "! :tada: Results:\n" 
               + bidSummary(obj) + "\n\n_" + bidPay() + "_")
           }
         })
     })
 }
 
+// Whisper the documentation
 var bidHelp = function(res) { 
   whisp(res, "How to use /bid\n"
   + "`/bid stuff with @-mentions` start new auction with the mentioned people\n"
