@@ -258,12 +258,10 @@ var bidReset = function(chan) {
 // Just returns a string about whether to 10X the payments. Note that the /bid
 // command doesn't actually parse out numbers or deal with payments in any way.
 var bidPay = function() {
-  //var tenx = bern(0.1)
-  var roll = randint(10) // randint(10)==1 is the same as bern(.1)
-  return "/roll 10 → " + roll + " ⇒ "
-  //return "Bernoulli[.1] says " 
-    + (roll===1 ? "PAY 10X! :money_with_wings: :moneybag: :money_mouth_face:" :
-                  "no payments! :sweat_smile:")
+  var r = randint(10) // randint(10)==1 is the same as bern(.1)
+  y = "/roll 10 → 1 ∴ PAY 10X! :money_with_wings: :moneybag: :money_mouth_face:"
+  n = "/roll 10 → " + r + " ≠ 1 ∴ no payments! :sweat_smile:"
+  return (r === 1 ? y : n)
 }
 
 // Add text as user's bid, shout the results if user is the last one to bid
