@@ -478,7 +478,7 @@ app.post('/tock', function(req, res) {
   }
 })
 
-app.post("tockcheck", function(req, res) {
+app.post("/tockcheck", function(req, res) {
   // end all tocks with end dates < now, post as failures to channel
   redis.keys("beebot.tockbot.tocks.*", function(err, obj) {
     for (var i = 0; i < obj.length; i++) {
