@@ -449,7 +449,7 @@ app.post('/tock', function(req, res) {
           var date = new Date(tock.dueby);
           var now =  new Date();
           var minutes = Math.floor(((date - now)/1000)/60);
-          var seconds = ((date - now)/1000) % 60;
+          var seconds = Math.floor(((date - now)/1000) % 60);
           rText += user + " is working on " + tock.text + ". Due in " +
             minutes + " minutes " + seconds + " seconds" + "\n";
         });
