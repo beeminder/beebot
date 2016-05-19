@@ -335,7 +335,7 @@ app.post('/bid', function(req, res) {
 // BEGIN TOCKBOT //
 var updateBeeminder = function(teamId, userId, slug, tocktext) {
   https.get("https://www.beeminder.com/slackbot?command="
-    + encodeURIComponent("^ " + slug + " 1 \"" + tocktext + "\"") + "&team_id="
+    + encodeURIComponent(slug + " ^ " + " 1 \"" + tocktext + "\"") + "&team_id="
     + teamId + "&user_id=" + userId
   ).on('error', (e) => { console.error(e); });
 }
