@@ -358,7 +358,7 @@ app.post('/tock', function(req, res) {
           if (tock.user === user) {
             redis.zremrangebyscore("beebot.tockbot.tocks." + chan, tock.dueby, tock.dueby,
               function(err, obj) {
-                shout(res, "Okay, ended tock for " + user);
+                shout(res, "Ended tock for " + user);
                 return;
               }
             );
@@ -377,7 +377,7 @@ app.post('/tock', function(req, res) {
               tock.dueby,
               tock.dueby,
               function(err, obj) {
-                redis.getall("beebot.tockbot.links." + team_id + "." + user,
+                redis.get("beebot.tockbot.links." + team_id + "." + user,
                   function(err, obj) {
                     if (obj) {
                       // user has linked goal to beeminder.
@@ -428,7 +428,7 @@ app.post('/tock', function(req, res) {
         var rText = "";
         obj.forEach(function(e) {
           var tock = JSON.parse(e);
-          rText += user + " is working on " + text + " until " + tock.dueby + "\n";
+          rText += user + " is working on " + tock.text + " until " + tock.dueby + "\n";
         });
         shout(res, rText);
       }
@@ -444,7 +444,7 @@ app.post('/tock', function(req, res) {
     };
     redis.zadd("beebot.tockbot.tocks." + chan, dueby, JSON.stringify(tock),
       function(err, obj) {
-        shout("Started tock for " + user + ": " + text);
+        shout(res, "Started tock for " + user + ": " + text);
       }
     );
   }
