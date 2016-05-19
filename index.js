@@ -483,7 +483,9 @@ app.post("/tockcheck", function(req, res) {
   redis.keys("beebot.tockbot.tocks.*", function(err, obj) {
     for (var i = 0; i < obj.length; i++) {
       var chan = obj[i].split(".").pop();
-      redis.zrangebyscore("beebot.tockbot.tocks." + chan, "-inf", Date.now(),
+      redis.zrangebyscore("beebot.tockbot.tocks." + chan,
+        Date.now() - 63000, // everything that's expired in the last 63 seconds
+        Date.now(),
         function(err, obj) {
           obj.forEach(function(e) {
             var tock = JSON.parse(e);
