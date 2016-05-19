@@ -487,7 +487,8 @@ app.post("tockcheck", function(req, res) {
         function(err, obj) {
           obj.forEach(function(e) {
             var tock = JSON.parse(e);
-            message += tock.user + " failed to complete " + text;
+            var message = tock.user +
+              " failed to complete "+ text +" :panda_face:";
             var rtm = bots.filter(function(b) {
               return b.teamId === tock.team_id; })[0];
 
