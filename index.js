@@ -501,10 +501,10 @@ app.post("/tockcheck", function(req, res) {
                        type    : "message",
                        channel : chan,
                        text    : message });
-            res.send("ok");
           });
         }
       );
+      res.send("ok");
     }
   });
 })
