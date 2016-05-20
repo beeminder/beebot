@@ -418,8 +418,8 @@ app.post('/tock', function(req, res) {
     + "`goalname`. Completing a tock will send a datapoint of \"1\" with "
     + "the tock text as the comment to Beeminder.\n"
     + "`/tock unlink` unlink your tocks from Beeminder\n"
-    + "`/tock abort` ends your tock\n"
-    + "`/tock length N` changes the default tock length for the channel to"
+    + "`/tock abort` ends your tock without marking as complete\n"
+    + "`/tock length N` changes the default tock length for the channel to "
     + "`N` minutes\n"
     + "`/tock help` show this message")
   } else if (text == "unlink") {
