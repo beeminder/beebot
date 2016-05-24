@@ -284,7 +284,7 @@ var bidHelp = function(res) {
   + "`/bid help` show this (see expost.padm.us/sealedbids for gory details)")
 }
 
-app.post('/bid', function(req, res) {
+app.post('/bid', (req, res) => {
   if(req.body.token != slackVerificationToken) {
     whisp(res, "This request didn't come from Slack!")
   }
