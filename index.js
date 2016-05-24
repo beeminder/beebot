@@ -481,10 +481,8 @@ app.post('/tock', function(req, res) {
 app.post("/tockcheck", function(req, res) {
   // end all tocks with end dates < now, post as failures to channel
   redis.keys("beebot.tockbot.tocks.*", function(err, obj) {
-    console.log("found " + obj.length + " channels")
     for (var i = 0; i < obj.length; i++) {
       var chan = obj[i].split(".").pop();
-      console.log("searching for channel " + chan)
       redis.zrangebyscore("beebot.tockbot.tocks." + chan,
         Date.now() - 63000, // everything that's expired in the last 63 seconds
         Date.now(),
@@ -500,7 +498,6 @@ app.post("/tockcheck", function(req, res) {
 
             var WebClient = require('@slack/client').WebClient;
             var webClient = new WebClient(rtm._token);
-            console.log("posting failure to channel: " + tock.chan);
             rtm.send({ id      : 1,
                        type    : "message",
                        channel : tock.chan,
