@@ -481,8 +481,10 @@ app.post('/tock', function(req, res) {
 app.post("/tockcheck", function(req, res) {
   // end all tocks with end dates < now, post as failures to channel
   redis.keys("beebot.tockbot.tocks.*", function(err, obj) {
+    console.log("found " + obj.length + " channels")
     for (var i = 0; i < obj.length; i++) {
       var chan = obj[i].split(".").pop();
+      console.log("searching for channel " + chan)
       redis.zrangebyscore("beebot.tockbot.tocks." + chan,
         Date.now() - 63000, // everything that's expired in the last 63 seconds
         Date.now(),
