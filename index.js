@@ -500,10 +500,10 @@ app.post("/tockcheck", function(req, res) {
 
             var WebClient = require('@slack/client').WebClient;
             var webClient = new WebClient(rtm._token);
-            console.log("posting failure to channel: " + chan);
+            console.log("posting failure to channel: " + tock.chan);
             rtm.send({ id      : 1,
                        type    : "message",
-                       channel : chan,
+                       channel : tock.chan,
                        text    : message });
           });
         }
