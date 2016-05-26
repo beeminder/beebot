@@ -4,7 +4,7 @@
   "description": "A helpful bot for interacting with Beeminder",
   "main": "index.js",
   "engines": {
-    "node": "5.3.0"
+    "node": "4.4.3"
   },
   "dependencies": {
     "@slack/client": "^3.0.0",
