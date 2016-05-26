@@ -8,7 +8,6 @@ if (process.env.REDISTOGO_URL) {
 }
 
 var express = require('express');
-var slackVerificationToken = "yzHrfswp6FcUbqwJP4ZllUi6";
 var app = express();
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());
@@ -283,7 +282,7 @@ var bidHelp = function(res) {
 }
 
 app.post('/bid', (req, res) => {
-  if(req.body.token != slackVerificationToken && req.body.token != process.env.SLACK_TOKEN) {
+  if(req.body.token != process.env.SLACK_TOKEN) {
     whisp(res, "This request didn't come from Slack!")
   }
   var rurl = req.body.response_url // for delayed responses to slash commands
@@ -339,7 +338,7 @@ var updateBeeminder = function(teamId, userId, slug, tocktext) {
 }
 
 app.post('/tock', function(req, res) {
-  if(req.body.token != slackVerificationToken && req.body.token != process.env.SLACK_TOKEN) {
+  if(req.body.token != process.env.SLACK_TOKEN) {
     whisp(res, "This request didn't come from Slack!")
   }
   var chan = req.body.channel_id
