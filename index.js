@@ -17,6 +17,7 @@ var url = require('url');
 var request = require('request');
 var https = require('https');
 var http = require('http');
+var beetils = require('./lib/beetils.js');
 
 var bots = []; // yikes
 
@@ -165,9 +166,6 @@ var shoutDelayed = function(rurl, txt) {
     "text": txt}
   }, function(error, response, body) { }) // error handling? pshaw.
 }
-
-// Bernoulli trial with probability p
-var bern = function(p) { return (Math.random() < p) }
 
 // Random integer from 1 to n inclusive
 var randint = function(n) { return Math.floor(Math.random()*n)+1 }
@@ -519,7 +517,7 @@ app.post('/roll', function(req, res) {
     whisp(res, "Pssst, this is not an integer: " + text)
   } else if(n <= 0) {
     shout(res, "Rolling " + n + "-sided die... "
-      + (bern(0.1) ? ":poop:" : ":boom:")
+      + (beetils.bern(0.1) ? ":poop:" : ":boom:")
       + " (try again with a positive number of sides?)")
   } else {
     shout(res, "Rolling " + n + "-sided die... it came up " + randint(n))
