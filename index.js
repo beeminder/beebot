@@ -10,8 +10,6 @@ if (process.env.REDISTOGO_URL) {
 var express    = require('express');
 var url        = require('url');
 var request    = require('request');
-var https      = require('https');
-var http       = require('http');
 var bodyParser = require('body-parser');
 
 var beebot     = require('./lib/beebot.js');
