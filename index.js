@@ -51,6 +51,7 @@ app.post('/tock', function(req, res) {
 app.post("/tockcheck", function(req, res) {
   tock.handleTockcheck();
   charge.handleChargeCheck();
+  res.send("ok");
 })
 
 app.post('/roll', function(req, res) {
