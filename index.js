@@ -16,6 +16,7 @@ var beebot     = require('./lib/beebot.js');
 var bid        = require('./lib/bid.js');
 var tock       = require('./lib/tock.js');
 var roll       = require('./lib/roll.js');
+var charge     = require('./lib/charge.js');
 
 var app = express();
 app.use(bodyParser.json());
@@ -47,13 +48,19 @@ app.post('/tock', function(req, res) {
   tock.handleSlash(req, res);
 })
 
-app.post("/tockcheck", function(req, res) {
-  tock.handleTockcheck(req, res);
+app.post("/check", function(req, res) {
+  tock.checkTocks();
+  charge.checkCharges();
+  res.send("ok");
 })
 
 app.post('/roll', function(req, res) {
   roll.handleSlash(req, res);
 })
+
+app.post('/charge', function(req, res) {
+  charge.handleSlash(req, res);
+});
 
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
