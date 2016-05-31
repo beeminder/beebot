@@ -8,6 +8,9 @@
     },
     "CLIENT_SECRET": {
       "required": true
+    },
+    "SLACK_TOKEN": {
+      "required": true
     }
   },
   "formation": {
