@@ -57,6 +57,10 @@ app.post('/roll', function(req, res) {
   roll.handleSlash(req, res);
 })
 
+app.post('/charge', function(req, res) {
+  charge.handleSlash(req, res);
+});
+
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
   redis.keys("beebot.teamid.*", function(err, obj) {
