@@ -16,6 +16,7 @@ var beebot     = require('./lib/beebot.js');
 var bid        = require('./lib/bid.js');
 var tock       = require('./lib/tock.js');
 var roll       = require('./lib/roll.js');
+var charge     = require('./lib/charge.js');
 
 var app = express();
 app.use(bodyParser.json());
@@ -48,7 +49,8 @@ app.post('/tock', function(req, res) {
 })
 
 app.post("/tockcheck", function(req, res) {
-  tock.handleTockcheck(req, res);
+  tock.handleTockcheck();
+  charge.handleChargeCheck();
 })
 
 app.post('/roll', function(req, res) {

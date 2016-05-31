@@ -4,7 +4,7 @@
 
 This is the source for Beebot, a Slack bot that allows you to interact with Beeminder.
 
-You can [install](https://www.beeminder.com/addtoslack) Beebot on your Slack team to test it out. You'll need a Beeminder account as well before you do.
+You can [install](https://www.beeminder.com/addtoslack) Beebot on your Slack team to test it out. You'll need a Beeminder account before you do.
 
 ### @beebot and /bee
 
