@@ -48,9 +48,9 @@ app.post('/tock', function(req, res) {
   tock.handleSlash(req, res);
 })
 
-app.post("/tockcheck", function(req, res) {
-  tock.handleTockcheck();
-  charge.handleChargeCheck();
+app.post("/check", function(req, res) {
+  tock.checkTocks();
+  charge.checkCharges();
   res.send("ok");
 })
 
