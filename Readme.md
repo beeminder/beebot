@@ -38,6 +38,12 @@ Announces to the channel that you're beginning a pomodoro session and the topic 
 
 `/roll N` rolls an N-sided die and returns the result.
 
+##### /charge
+
+Charges you the specified amount via the [Beeminder API](https://www.beeminder.com/api), or schedules the amount to be charged in the specified time unless canceled.
+
+For example, you could say `/charge 5 in 30 unless I send this email`. Then if you send the email in time you can say `/charge cancel` to cancel it, or if you don't, just let the charge go through. 
+
 ### Contributing
 
 Make a branch off of master and send a pull request!
