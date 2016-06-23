@@ -18,6 +18,14 @@ var tock       = require('./lib/tock.js');
 var roll       = require('./lib/roll.js');
 var charge     = require('./lib/charge.js');
 
+// Ideas for future slash commands...
+// Predictionbook bot:
+// /bet such-and-such happens p=.3 #foo
+// Karmabot (needs to be opt-in):
+// /karma on
+// TagTime (start with just announcing pings on the universal schedule)
+// /tagtime on
+
 var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
