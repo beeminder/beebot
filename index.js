@@ -17,6 +17,7 @@ var bid        = require('./lib/bid.js');
 var tock       = require('./lib/tock.js');
 var roll       = require('./lib/roll.js');
 var charge     = require('./lib/charge.js');
+var karma      = require('./lib/karma.js');
 
 // Ideas for future slash commands...
 // Predictionbook bot:
@@ -76,6 +77,11 @@ app.post('/roll', function(req, res) {
 app.post('/charge', function(req, res) {
   console.log("Request body: " + JSON.stringify(req.body));
   charge.handleSlash(req, res);
+});
+
+app.post('/karma', function(req, res) {
+  console.log("Request body: " + JSON.stringify(req.body));
+  karma.handleSlash(req, res);
 });
 
 app.listen(app.get('port'), function() {
