@@ -44,6 +44,10 @@ Charges you the specified amount via the [Beeminder API](https://www.beeminder.c
 
 For example, you could say `/charge 5 in 30 unless I send this email`. Then if you send the email in time you can say `/charge cancel` to cancel it, or if you don't, just let the charge go through. 
 
+##### /karma
+
+Turns karma scores on or off for your team. If karma is on, Beebot will listen for any text like `foo++` or `bar--` and update the karma score appropriately. `/karma list` shows all karma scores; `/karma list N` shows the top N scores. 
+
 ### Contributing
 
 Make a branch off of master and send a pull request!
