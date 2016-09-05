@@ -19,6 +19,7 @@ var roll       = require('./lib/roll.js');
 var charge     = require('./lib/charge.js');
 var karma      = require('./lib/karma.js');
 var tagtime    = require('./lib/tagtime.js');
+var clinton    = require('./lib/clinton.js');
 
 // Ideas for future slash commands...
 // Predictionbook bot:
