@@ -17,14 +17,12 @@ var bid        = require('./lib/bid.js');
 var tock       = require('./lib/tock.js');
 var roll       = require('./lib/roll.js');
 var charge     = require('./lib/charge.js');
+var karma      = require('./lib/karma.js');
+var tagtime    = require('./lib/tagtime.js');
 
 // Ideas for future slash commands...
 // Predictionbook bot:
 // /bet such-and-such happens p=.3 #foo
-// Karmabot (needs to be opt-in):
-// /karma on
-// TagTime (start with just announcing pings on the universal schedule)
-// /tagtime on
 
 var app = express();
 app.use(bodyParser.json());
@@ -76,6 +74,21 @@ app.post('/roll', function(req, res) {
 app.post('/charge', function(req, res) {
   console.log("Request body: " + JSON.stringify(req.body));
   charge.handleSlash(req, res);
+});
+
+app.post('/karma', function(req, res) {
+  console.log("Request body: " + JSON.stringify(req.body));
+  karma.handleSlash(req, res);
+});
+
+app.get('/ping', function(req, res) {
+  console.log("Request body: " + JSON.stringify(req.body));
+  tagtime.handlePing(req, res);
+});
+
+app.post('/tagtime', function(req, res) {
+  console.log("Request body: " + JSON.stringify(req.body));
+  tagtime.handleSlash(req, res);
 });
 
 app.listen(app.get('port'), function() {

@@ -24,25 +24,34 @@ The core Beebot commands are listed here. They can be invoked by users either wi
 
 ### Other slash commands
 
-Installing Beebot also installs a number of slash commands. Each command is handled by code in a file of the same name, and contains help text on how it works.
+Installing Beebot also installs a number of related and not-so-related slash commands. 
+Each command is handled by code in a file of the same name, and contains help text on how it works.
 
 ##### /bid
 
-Sets up a sealed-bid auction with the mentioned participants. Participants submit their bid via the `/bid` command. Once all bids have been collected, the bids are revealed.
+Sets up a sealed-bid auction with the mentioned participants. Participants submit their bids via the `/bid` command. Once all bids have been collected, the bids are revealed.
 
 ##### /tock
 
-Announces to the channel that you're beginning a pomodoro session and the topic of that session. You can then abort or finish the tock. The default tock length is 45 minutes, but this can be changed with `/tock length N`.
+Announces to the channel that you're beginning a pomodoro session (45-minute pomodoros are traditionally, in Beeminderland, known as tocks) and what you plan to get done during it. You can then abort or finish the tock. Change the length from the default 45 minutes with `/tock length N`.
 
 ##### /roll
 
-`/roll N` rolls an N-sided die and returns the result.
+Rolls a die. Specifically `/roll N` rolls an N-sided die.
 
 ##### /charge
 
 Charges you the specified amount via the [Beeminder API](https://www.beeminder.com/api), or schedules the amount to be charged in the specified time unless canceled.
 
 For example, you could say `/charge 5 in 30 unless I send this email`. Then if you send the email in time you can say `/charge cancel` to cancel it, or if you don't, just let the charge go through. 
+
+##### /karma
+
+Turns karma scores on or off for your team. If karma is on, Beebot will listen for any text like `foo++` or `bar--` and update the karma score appropriately. `/karma list` shows all karma scores; `/karma list N` shows the top N scores. 
+
+##### /tagtime
+
+Turns on or off TagTime notifications as direct messages. No way to respond to them, just if you want another way to be notified of pings.
 
 ### Contributing
 
