@@ -53,6 +53,15 @@ Turns karma scores on or off for your team. If karma is on, Beebot will listen f
 
 Turns on or off TagTime notifications as direct messages. No way to respond to them, just if you want another way to be notified of pings.
 
+##### /bet
+
+We haven't actually implemented this one yet but it might be cool!
+It's like predictionbook.com where you can log predictions like 
+`/bet such-and-such happens p=.3 #foo`
+and then, I don't know, some other syntax for resolving them, keeping track of your calibration, reminding you to resolve them...
+Ok, this could be a whole startup's worth of work, but someone should totally do it!
+
+
 ### Contributing
 
 Make a branch off of master and send a pull request!

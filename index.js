@@ -1,102 +1,102 @@
-require('dotenv').load();
+require('dotenv').load()
+
 if (process.env.REDISTOGO_URL) {
-  var rtg   = require("url").parse(process.env.REDISTOGO_URL);
-  var redis = require("redis").createClient(rtg.port, rtg.hostname);
-  redis.auth(rtg.auth.split(":")[1]);
+  var rtg   = require("url").parse(process.env.REDISTOGO_URL)
+  var redis = require("redis").createClient(rtg.port, rtg.hostname)
+  redis.auth(rtg.auth.split(":")[1])
 } else {
-  var redis = require("redis").createClient();
+  var redis = require("redis").createClient()
 }
 
-var express    = require('express');
-var url        = require('url');
-var request    = require('request');
-var bodyParser = require('body-parser');
+var express    = require('express')
+var url        = require('url')
+var request    = require('request')
+var bodyParser = require('body-parser')
 
-var beebot     = require('./lib/beebot.js');
-var bid        = require('./lib/bid.js');
-var tock       = require('./lib/tock.js');
-var roll       = require('./lib/roll.js');
-var charge     = require('./lib/charge.js');
-var karma      = require('./lib/karma.js');
-var tagtime    = require('./lib/tagtime.js');
+var beebot     = require('./lib/beebot.js')  // the /bee command?
+var bid        = require('./lib/bid.js')     // the /bid command
+var tock       = require('./lib/tock.js')    // the /tock command
+var roll       = require('./lib/roll.js')    // the /roll command
+var charge     = require('./lib/charge.js')  // the /charge command
+var karma      = require('./lib/karma.js')   // the /karma command
+var tagtime    = require('./lib/tagtime.js') // the /tagtime command
 
-// Ideas for future slash commands...
-// Predictionbook bot:
-// /bet such-and-such happens p=.3 #foo
+var app = express()
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
 
-var app = express();
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.set('port', (process.env.PORT || 5000))
 
-app.set('port', (process.env.PORT || 5000));
+app.post('/bot', (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  beebot.handleCreateBot(req, resp)
+})
 
-app.post('/bot', function(req, res) {
-  console.log("Request body: " + JSON.stringify(req.body));
-  beebot.handleCreateBot(req, res);
-});
-
-app.delete('/bot', function(req, res) {
-  console.log("Request body: " + JSON.stringify(req.body));
-  // TODO: delete a bot, if a user deauths from a team.
-  // basically just need to delete the teamId from redis so we don't keep trying
+app.delete('/bot', (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  // TODO: delete a bot if a user deauths from a team.
+  // need to delete the teamId from redis so we don't keep trying
   // to create it on restarts
-});
-
-app.post('/zeno', function(req, res) {
-  console.log("Request body: " + JSON.stringify(req.body));
-  beebot.handleZeno(req, res);
-});
-
-app.get('/debugger', function(req, res) { debugger; });
-
-app.post('/bid', (req, res) => {
-  console.log("Request body: " + JSON.stringify(req.body));
-  bid.handleSlash(req, res);
 })
 
-app.post('/tock', function(req, res) {
-  console.log("Request body: " + JSON.stringify(req.body));
-  tock.handleSlash(req, res);
+app.post('/zeno', (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  beebot.handleZeno(req, resp)
 })
 
-app.post("/check", function(req, res) {
-  console.log("Request body: " + JSON.stringify(req.body));
-  tock.checkTocks();
-  charge.checkCharges();
-  res.send("ok");
+app.get('/debugger', (req, resp) => { debugger })
+
+app.post('/bid', (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  bid.handleSlash(req, resp)
 })
 
-app.post('/roll', function(req, res) {
-  console.log("Request body: " + JSON.stringify(req.body));
-  roll.handleSlash(req, res);
+app.post('/tock', (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  tock.handleSlash(req, resp) 
 })
 
-app.post('/charge', function(req, res) {
-  console.log("Request body: " + JSON.stringify(req.body));
-  charge.handleSlash(req, res);
-});
+app.post("/check", (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  tock.checkTocks()
+  charge.checkCharges()
+  resp.send("ok")
+})
 
-app.post('/karma', function(req, res) {
-  console.log("Request body: " + JSON.stringify(req.body));
-  karma.handleSlash(req, res);
-});
+app.post('/roll', (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  roll.handleSlash(req, resp)
+})
 
-app.get('/ping', function(req, res) {
-  console.log("Request body: " + JSON.stringify(req.body));
-  tagtime.handlePing(req, res);
-});
+app.post('/charge', (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  charge.handleSlash(req, resp)
+})
 
-app.post('/tagtime', function(req, res) {
-  console.log("Request body: " + JSON.stringify(req.body));
-  tagtime.handleSlash(req, res);
-});
+app.post('/karma', (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  karma.handleSlash(req, resp)
+})
 
-app.listen(app.get('port'), function() {
-  console.log('Node app is running on port', app.get('port'));
-  redis.keys("beebot.teamid.*", function(err, obj) {
+app.get('/ping', (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  tagtime.handlePing(req, resp)
+})
+
+app.post('/tagtime', (req, resp) => {
+  console.log("Request body: " + JSON.stringify(req.body))
+  tagtime.handleSlash(req, resp)
+})
+
+app.listen(app.get('port'), () => {
+  console.log('Beebot app is listening on port', app.get('port'))
+  redis.keys("beebot.teamid.*", (err, obj) => {
     for (var i = 0; i < obj.length; i++) {
-      var teamId = obj[i].split(".").pop();
-      beebot.startBot(teamId);
+      var teamId = obj[i].split(".").pop()
+      console.log(`Doing beebot.startBot(${teamId})`)
+      beebot.startBot(teamId)
     }
-  });
-});
+    // I think that whole for loop can replace with this:
+    //obj.forEach(x => beebot.startBot(x.split(".").pop()))
+  })
+})
