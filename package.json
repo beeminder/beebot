@@ -1,26 +1,27 @@
 {
   "name": "beebot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A helpful bot for interacting with Beeminder",
   "main": "index.js",
   "engines": {
-    "node": "6.11.1"
+    "node": "6.x"
   },
   "dependencies": {
-    "@slack/client": "^3.0.0",
-    "body-parser": "^1.14.2",
-    "dotenv": "^1.2.0",
-    "express": "^4.13.3",
+    "@slack/client": "^3.13.0",
+    "body-parser": "^1.18.2",
+    "dotenv": "^4.0.0",
+    "express": "^4.15.5",
     "http": "0.0.0",
     "https": "^1.0.0",
-    "redis": "^2.4.2",
-    "request": "^2.67.0"
+    "redis": "^2.8.0",
+    "request": "^2.83.0"
   },
   "devDependencies": {},
-  "babel": { },
+  "babel": {},
   "scripts": {
     "start": "node index.js"
   },
   "author": "Beeminder",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": "glitch/bee"
 }

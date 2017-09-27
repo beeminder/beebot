@@ -1,29 +1,12 @@
 {
-  "name": "beebot",
-  "scripts": {
-  },
-  "env": {
-    "CLIENT_ID": {
-      "required": true
-    },
-    "CLIENT_SECRET": {
-      "required": true
-    },
-    "SLACK_TOKEN": {
-      "required": true
-    }
-  },
-  "formation": {
-    "web": {
-      "quantity": 1
-    }
-  },
-  "addons": [
-    "redistogo"
-  ],
-  "buildpacks": [
-    {
-      "url": "heroku/nodejs"
-    }
-  ]
+
+"name": "beebot",
+"scripts": { },
+"env": { "CLIENT_ID":     { "required": true },
+         "CLIENT_SECRET": { "required": true },
+         "SLACK_TOKEN":   { "required": true } },
+"formation": { "web": { "quantity": 1 } },
+"addons": [ "redistogo" ],
+"buildpacks": [ { "url": "heroku/nodejs" } ]
+
 }
