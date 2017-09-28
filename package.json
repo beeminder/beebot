@@ -2,7 +2,7 @@
   "name": "beebot",
   "version": "1.0.1",
   "description": "A helpful bot for interacting with Beeminder",
-  "main": "index.js",
+  "main": "server.js",
   "engines": {
     "node": "6.x"
   },
@@ -19,7 +19,7 @@
   "devDependencies": {},
   "babel": {},
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "author": "Beeminder",
   "license": "MIT",
