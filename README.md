@@ -65,3 +65,18 @@ Ok, this could be a whole startup's worth of work, but someone should totally do
 ### Contributing
 
 Make a branch off of master and send a pull request!
+
+
+### Debugging Notes
+
+In case we need to revert to this version of the Slack client for Node.js:
+```
+"@slack/client": "^3.13.0",
+```
+
+To create a bot for a team on Slack, we do a POST to /bot here with `team_id` and `bot_access_token`.
+We never do that for the test version of the bot hosted on Glitch.
+But it still works. Why? 
+Maybe that only applies to slash commands that talk to the Beeminder server.
+
+What's the difference between redis.set and redis.hset

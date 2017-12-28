@@ -27,76 +27,61 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 app.set('port', (process.env.PORT || 5000))
 
+// I don't know what this is for
+app.get('/debugger', (req, resp) => { debugger })
+
+function dbg(slash, req) {
+  console.log(`/${slash} request body: ${JSON.stringify(req.body)}`)
+}
+
 app.post('/bot', (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
+  dbg('bot', req)
   beebot.handleCreateBot(req, resp)
 })
 
 app.delete('/bot', (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
-  // TODO: delete a bot if a user deauths from a team.
-  // need to delete the teamId from redis so we don't keep trying
-  // to create it on restarts
+  dbg('bot', req)
+  // TODO: Delete a bot if a user deauths from a team. Need to delete the 
+  // teamId from redis so we don't keep trying to create it on restarts.
 })
 
-app.post('/zeno', (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
-  beebot.handleZeno(req, resp)
-})
+app.post('/bid',     (q, r) => { dbg('bid',     q);     bid.handleSlash(q, r) })
+app.post('/tock',    (q, r) => { dbg('tock',    q);    tock.handleSlash(q, r) })
+app.post('/roll',    (q, r) => { dbg('roll',    q);    roll.handleSlash(q, r) })
+app.post('/charge',  (q, r) => { dbg('charge',  q);  charge.handleSlash(q, r) })
+app.post('/karma',   (q, r) => { dbg('karma',   q);   karma.handleSlash(q, r) })
+app.post('/tagtime', (q, r) => { dbg('tagtime', q); tagtime.handleSlash(q, r) })
 
-app.get('/debugger', (req, resp) => { debugger })
+app.get('/ping',     (q, r) => { dbg('ping',    q); tagtime.handlePing( q, r) })
+app.post('/zeno',    (q, r) => { dbg('zeno',    q);  beebot.handleZeno( q, r) })
 
-app.post('/bid', (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
-  bid.handleSlash(req, resp)
-})
-
-app.post('/tock', (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
-  tock.handleSlash(req, resp) 
-})
-
-app.post("/check", (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
+// There's no /check slash command in the Slack bot; rather this is an endpoint 
+// we poll to trigger checks if tocks or charges are due. Presumably that's 
+// cron'd in Heroku? Andy?
+app.post('/check', (req, resp) => {
+  dbg('check', req)
   tock.checkTocks()
   charge.checkCharges()
   resp.send("ok")
 })
 
-app.post('/roll', (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
-  roll.handleSlash(req, resp)
-})
-
-app.post('/charge', (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
-  charge.handleSlash(req, resp)
-})
-
-app.post('/karma', (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
-  karma.handleSlash(req, resp)
-})
-
-app.get('/ping', (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
-  tagtime.handlePing(req, resp)
-})
-
-app.post('/tagtime', (req, resp) => {
-  console.log("Request body: " + JSON.stringify(req.body))
-  tagtime.handleSlash(req, resp)
+app.get('/', (req, resp) => {
+  resp.send("You have reached the server of Beeminder's Slack bot.\n" +
+            "It can't come to the client right now but if you do an OAuth " +
+            "dance with Slack (POST to /bot) it will get back to you as " +
+            "soon as possible.")
 })
 
 app.listen(app.get('port'), () => {
   console.log('Beebot app is listening on port', app.get('port'))
   redis.keys("beebot.teamid.*", (err, obj) => {
+    console.log(`DEBUG1: obj (len=${obj.length}) = ${JSON.stringify(obj)}`)
     for (var i = 0; i < obj.length; i++) {
       var teamId = obj[i].split(".").pop()
-      console.log(`Doing beebot.startBot(${teamId})`)
+      console.log(`Doing beebot.startBot("${teamId}")`)
       beebot.startBot(teamId)
     }
-    // I think that whole for loop can replace with this:
+    // I think that whole for loop can be replaced with this:
     //obj.forEach(x => beebot.startBot(x.split(".").pop()))
   })
 })
