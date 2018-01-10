@@ -80,3 +80,21 @@ But it still works. Why?
 Maybe that only applies to slash commands that talk to the Beeminder server.
 
 What's the difference between redis.set and redis.hset
+
+Karmabot stopped working after deploying the following changes:
+https://github.com/beeminder/beebot/compare/346b56e61035...efba9b029b39
+
+Those all seem innocuous so I'm theorizing that something changed with Slack permissions and it was triggered by a redeploy.
+
+Obvious way to test that though is to revert the code to just before 346b56e61035 and see if it works again.
+
+### Instructions for deploying
+
+Andy set it up to automagically deploy whenever changes are pushed to the branch `production`.
+So do the following after pushing to master:
+
+```
+git checkout production
+git merge master
+git push
+```
