@@ -1,7 +1,7 @@
 require('dotenv').load()
 
-if (process.env.REDISTOGO_URL) {
-  var rtg   = require("url").parse(process.env.REDISTOGO_URL)
+if (process.env.REDIS_URL) {
+  var rtg   = require("url").parse(process.env.REDIS_URL)
   var redis = require("redis").createClient(rtg.port, rtg.hostname)
   redis.auth(rtg.auth.split(":")[1])
 } else {
@@ -31,7 +31,7 @@ app.set('port', (process.env.PORT || 5000))
 app.get('/debugger', (req, resp) => { debugger })
 
 function dbg(slash, req) {
-  console.log(`/${slash} request body: ${JSON.stringify(req.body)}`)
+  console.log(`/${slash} request body:`, req.body)
 }
 
 app.post('/bot', (req, resp) => {
