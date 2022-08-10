@@ -31,7 +31,7 @@ app.set('port', (process.env.PORT || 5000))
 app.get('/debugger', (req, resp) => { debugger })
 
 function dbg(slash, req) {
-  console.log(`/${slash} request body: ${JSON.stringify(req.body)}`)
+  console.log(`/${slash} request body:`, req.body)
 }
 
 app.post('/bot', (req, resp) => {
