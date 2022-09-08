@@ -79,12 +79,17 @@ app.get('/', (req, resp) => {
 
 app.listen(app.get('port'), () => {
   console.log('Beebot app is listening on port', app.get('port'))
-  redis.keys("beebot.teamid.*", (err, obj) => {
+  redis.keys("beebot.teamid.T0HC65LRM", (err, obj) => {
+  //redis.keys("beebot.teamid.*", (err, obj) => {
     console.log(`DEBUG1: obj (len=${obj.length}) = ${JSON.stringify(obj)}`)
     for (var i = 0; i < obj.length; i++) {
       var teamId = obj[i].split(".").pop()
       console.log(`Doing beebot.startBot("${teamId}")`)
+      try {
       beebot.startBot(teamId)
+      } catch (error) {
+        console.log("DEBUG LISTEN CATCH", error)
+      }
     }
     // I think that whole for loop can be replaced with this:
     //obj.forEach(x => beebot.startBot(x.split(".").pop()))
