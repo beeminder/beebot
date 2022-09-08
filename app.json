@@ -6,7 +6,7 @@
          "CLIENT_SECRET": { "required": true },
          "SLACK_TOKEN":   { "required": true } },
 "formation": { "web": { "quantity": 1 } },
-"addons": [ "redistogo" ],
+"addons": [ "heroku-redis" ],
 "buildpacks": [ { "url": "heroku/nodejs" } ]
 
 }
