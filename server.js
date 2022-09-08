@@ -1,9 +1,15 @@
 require('dotenv').load()
 
 if (process.env.REDIS_URL) {
-  var rtg   = require("url").parse(process.env.REDIS_URL)
-  var redis = require("redis").createClient(rtg.port, rtg.hostname)
-  redis.auth(rtg.auth.split(":")[1])
+  //var rtg   = require("url").parse(process.env.REDIS_URL)
+  var redis = require("redis").createClient({
+    url: process.env.REDIS_URL,
+    socket: {
+      tls: true,
+      rejectUnauthorized: false
+    }
+  })
+  //redis.auth(rtg.auth.split(":")[1])
 } else {
   var redis = require("redis").createClient()
 }
