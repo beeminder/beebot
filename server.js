@@ -76,6 +76,38 @@ app.get('/', (req, resp) => {
             "dance with Slack (POST to /bot) it will get back to you as " +
             "soon as possible.")
 })
+app.get('/tryconnect', (req, resp) => {
+  var bat = req.query.bot_access_token
+  const Client = require('@slack/client').RtmClient
+  const CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS
+  const MemoryDataStore = require('@slack/client').MemoryDataStore
+  console.log("TOKENNNNNNNNN", bat)
+  const rtm = new Client(bat, {
+    useRtmConnect: true,
+    dataStore: new MemoryDataStore(),
+  })
+  console.log("RTM token?", rtm.token)
+  rtm.token = bat
+  console.log("RTM token?", rtm.token)
+
+  rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, function(rtmStartData) {
+    console.log("AUTHENTICATED", Object.keys(rtmStartData))
+  })
+  rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, () => {
+    console.log("CONNECTION READY")
+    console.log("RTM is connected?", rtm.connected)
+  })
+
+  rtm.start()
+    //.catch(console.error);
+  console.log("RTM is connected?", rtm.connected)
+  resp.send("waiting on tryconnect")
+})
+app.get('/tryStartBot', (req, resp) => {
+  var bat = req.query.teamid
+  beebot.startBot(bat)
+  resp.send("waiting on startbot")
+})
 
 app.listen(app.get('port'), () => {
   console.log('Beebot app is listening on port', app.get('port'))
@@ -85,11 +117,7 @@ app.listen(app.get('port'), () => {
     for (var i = 0; i < obj.length; i++) {
       var teamId = obj[i].split(".").pop()
       console.log(`Doing beebot.startBot("${teamId}")`)
-      try {
       beebot.startBot(teamId)
-      } catch (error) {
-        console.log("DEBUG LISTEN CATCH", error)
-      }
     }
     // I think that whole for loop can be replaced with this:
     //obj.forEach(x => beebot.startBot(x.split(".").pop()))
