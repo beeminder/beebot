@@ -48,6 +48,10 @@ app.delete('/bot', (req, resp) => {
   dbg('bot', req)
   // TODO: Delete a bot if a user deauths from a team. Need to delete the 
   // teamId from redis so we don't keep trying to create it on restarts.
+  // should look something like this:
+  //redis.del(rediskey, function(err, obj) {
+  //  console.log("redis delete callback", err, obj)
+  //})
 })
 
 app.post('/bid',     (q, r) => { dbg('bid',     q);     bid.handleSlash(q, r) })
@@ -64,7 +68,7 @@ app.post('/zeno',    (q, r) => { dbg('zeno',    q);  beebot.handleZeno( q, r) })
 // we poll to trigger checks if tocks or charges are due. Presumably that's 
 // cron'd in Heroku? Andy?
 app.post('/check', (req, resp) => {
-  dbg('check', req)
+  //dbg('check', req)
   tock.checkTocks()
   charge.checkCharges()
   resp.send("ok")
@@ -81,26 +85,37 @@ app.get('/tryconnect', (req, resp) => {
   const Client = require('@slack/client').RtmClient
   const CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS
   const MemoryDataStore = require('@slack/client').MemoryDataStore
-  console.log("TOKENNNNNNNNN", bat)
   const rtm = new Client(bat, {
     useRtmConnect: true,
     dataStore: new MemoryDataStore(),
   })
-  console.log("RTM token?", rtm.token)
-  rtm.token = bat
-  console.log("RTM token?", rtm.token)
 
+  rtm.on('error', (error) => {
+    //console.log("mysterycrashererror")
+    console.log("ERROR", typeof(error), error)
+  })
   rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, function(rtmStartData) {
     console.log("AUTHENTICATED", Object.keys(rtmStartData))
+    rtm.userId = rtmStartData.self.id
   })
   rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, () => {
-    console.log("CONNECTION READY")
     console.log("RTM is connected?", rtm.connected)
+  })
+  rtm.on(CLIENT_EVENTS.RTM.DISCONNECT, () => {
+    console.log("RTM is DISCONNECTED?", rtm.connected)
+  })
+  rtm.on(CLIENT_EVENTS.RTM.UNABLE_TO_RTM_START, (error) => {
+    console.log("UNABLE_TO_RTM_START", typeof(error), error)
+  })
+  rtm.on(CLIENT_EVENTS.RTM.WS_ERROR, (error) => {
+    console.log("WS_ERROR", typeof(error), error)
+  })
+  rtm.on(CLIENT_EVENTS.WEB.RATE_LIMITED, (error) => {
+    console.log("WEB RATE LIMITED", typeof(error), error)
   })
 
   rtm.start()
-    //.catch(console.error);
-  console.log("RTM is connected?", rtm.connected)
+  console.log("TrY CONNECT: started?", rtm.connected)
   resp.send("waiting on tryconnect")
 })
 app.get('/tryStartBot', (req, resp) => {
@@ -113,10 +128,10 @@ app.listen(app.get('port'), () => {
   console.log('Beebot app is listening on port', app.get('port'))
   //redis.keys("beebot.teamid.T0HC65LRM", (err, obj) => {
   redis.keys("beebot.teamid.*", (err, obj) => {
-    console.log(`DEBUG1: obj (len=${obj.length}) = ${JSON.stringify(obj)}`)
+    //console.log(`DEBUG1: obj (len=${obj.length}) = ${JSON.stringify(obj)}`)
     for (var i = 0; i < obj.length; i++) {
       var teamId = obj[i].split(".").pop()
-      console.log(`Doing beebot.startBot("${teamId}")`)
+      //console.log(`Doing beebot.startBot("${teamId}")`)
       beebot.startBot(teamId)
     }
     // I think that whole for loop can be replaced with this:

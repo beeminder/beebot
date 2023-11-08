@@ -1,25 +1,25 @@
 {
   "name": "beebot",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A helpful bot for interacting with Beeminder",
   "main": "server.js",
   "engines": {
-    "node": "8"
+    "node": "20.x"
   },
   "dependencies": {
-    "@slack/client": "^3.15.0",
+    "@slack/client": "^3.16.1-sec.2",
     "body-parser": "^1.18.2",
     "dotenv": "^4.0.0",
     "express": "^4.16.2",
     "http": "0.0.0",
     "https": "^1.0.0",
+    "nodemon": "^2.0.22",
     "redis": "^3.0.0",
     "request": "^2.83.0"
   },
-  "devDependencies": {},
   "babel": {},
   "scripts": {
-    "start": "node server.js"
+    "start": "nodemon server.js"
   },
   "author": "Beeminder",
   "license": "MIT",
